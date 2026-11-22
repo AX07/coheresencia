@@ -1,4 +1,4 @@
 {
   "cleanUrls": true,
-  "rewrites": [{ "source": "/:name", "destination": "/miembro.html" }]
+  "rewrites": [{ "source": "/:name", "destination": "/miembro" }]
 }
