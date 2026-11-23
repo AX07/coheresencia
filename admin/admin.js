@@ -24,7 +24,7 @@ COH.ready.then(() => {
   const fail = (e) => { up = null; render(); toast(e.message || 'No se pudo guardar'); };
   function content() {
     const g = C.gh.cfg(), on = C.gh.ok();
-    const banner = `<div class="card gh ${on ? 'ok' : ''}"><div><b>${on ? 'GitHub conectado' : 'Conecta GitHub para subir vídeos'}</b><small class="mute" style="display:block">${on ? esc(g.repo) + ' · rama ' + esc(g.branch) + '. Cada vídeo se guarda en el proyecto y la web se actualiza sola en ~1 minuto.' : 'Los vídeos se guardan dentro del proyecto, sin Vimeo ni YouTube. Hace falta un permiso de GitHub, una sola vez.'}</small></div><button class="btn sm ${on ? 'ghost' : ''}" data-g="settings">${on ? 'Ajustes' : 'Conectar'}</button></div>`;
+    const banner = `<div class="card gh ${on ? 'ok' : ''}"><div><b>${on ? 'Subida de vídeos activa' : 'Desbloquea la subida de vídeos'}</b><small class="mute" style="display:block">${on ? 'Cada vídeo que subes se guarda en tu web, que se actualiza sola en ~1 minuto. (' + esc(g.repo) + ')' : 'Los vídeos se guardan dentro de tu web, sin Vimeo ni YouTube. Escribe la contraseña del CRM una sola vez.'}</small></div><button class="btn sm ${on ? 'ghost' : ''}" data-g="settings">${on ? 'Ajustes' : 'Desbloquear'}</button></div>`;
     return banner + Object.entries(C.TRACKS).map(([k, t]) => { const ls = C.lessons(k); return `<div class="tr"><h2>${t.name}</h2><span class="mute">${t.sub} · ${t.seq ? 'se desbloquea en orden' : 'acceso libre'}</span><button class="btn sm ghost" style="margin-left:auto" data-g="add" data-t="${k}">+ Lección</button></div><div class="list">${ls.map((l, i) => {
       const busy = up && up.id === l.id;
       const right = busy ? `<div class="upbar"><div class="bar"><i style="width:${Math.round(up.pct * 100)}%"></i></div><small class="mute">${esc(up.msg)}</small></div>` : `<span class="chip ${l.video ? 'ok' : 'warn'}">${l.video ? 'Vídeo subido' : 'Sin vídeo'}</span><label class="btn sm ${l.video ? 'ghost' : ''}" ${up ? 'style="opacity:.4;pointer-events:none"' : ''}>${l.video ? 'Reemplazar' : 'Subir vídeo'}<input type="file" accept="video/mp4,video/webm" hidden data-up="${l.id}"></label>`;
@@ -32,8 +32,11 @@ COH.ready.then(() => {
     }).join('')}</div>`; }).join('') + '<p class="mute" style="margin-top:22px">El orden de Cuerpo es el orden en que se desbloquea. Vídeos en .mp4 o .webm, hasta 90 MB cada uno: exporta a 720p y pesan poco.</p>';
   }
   const persist = async (msg) => { if (!C.gh.ok()) { settings(); return false; } try { toast('Guardando…'); await C.gh.saveLessons(); toast(msg || 'Guardado. La web se actualiza en ~1 minuto'); return true; } catch (e) { toast(e.message); return false; } };
-  function settings() {
+  function settings(manual) {
     const g = C.gh.cfg();
+    if (!manual) { dlg.innerHTML = `<form class="dlg" id="pf"><h2>Desbloquear subida de vídeos</h2><p class="mute">Escribe la contraseña del CRM. Solo hace falta una vez en este navegador.</p>
+    <label>Contraseña<input name="password" type="password" required autocomplete="current-password" autofocus></label><p id="gerr" style="color:var(--bad);min-height:20px"></p>
+    <div class="acts"><button class="btn" type="submit">Desbloquear</button><button class="btn ghost" type="button" data-x>Cancelar</button><button class="btn ghost" type="button" data-g="manual" style="margin-left:auto;font-size:12px">Usar un token de GitHub</button></div></form>`; dlg.dataset.id = ''; dlg.showModal(); return; }
     dlg.innerHTML = `<form class="dlg" id="gf"><h2>Conectar GitHub</h2><p class="mute">Una sola vez. Así el CRM guarda los vídeos en el proyecto y la web se publica sola.</p>
     <ol class="mute" style="padding-left:18px;display:grid;gap:4px;font-size:14px"><li>Entra en <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--gold)">github.com → Fine-grained token</a>.</li><li>Repository access: solo este repositorio.</li><li>Permissions → Contents: <b>Read and write</b>.</li><li>Pega aquí el token. Se queda en este navegador.</li></ol>
     <label>Repositorio<input name="repo" value="${esc(g.repo)}" required pattern="[\w.\-]+/[\w.\-]+"></label>
@@ -105,9 +108,11 @@ COH.ready.then(() => {
   document.addEventListener('input', (e) => { if (e.target.id === 'q') { q = e.target.value; const p = e.target.selectionStart; render(); const n = $('#q'); n.focus(); n.setSelectionRange(p, p); } });
 
   dlg.addEventListener('submit', async (e) => {
-    const f = e.target.id; if (f !== 'gf' && f !== 'lf') return; e.preventDefault();
+    const f = e.target.id; if (f !== 'gf' && f !== 'lf' && f !== 'pf') return; e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
-    if (f === 'gf') {
+    if (f === 'pf') {
+      try { $('#gerr').textContent = 'Comprobando…'; await C.gh.unlock(d.password); dlg.close(); render(); toast('Listo: ya puedes subir vídeos'); } catch (x) { if (x.manual) return settings(true); $('#gerr').textContent = x.message; }
+    } else if (f === 'gf') {
       C.gh.setCfg({ repo: d.repo.trim(), branch: d.branch.trim(), token: d.token.trim() });
       try { $('#gerr').textContent = 'Probando…'; await C.gh.test(); dlg.close(); render(); toast('GitHub conectado'); } catch (x) { $('#gerr').textContent = x.message; }
     } else {
@@ -118,6 +123,7 @@ COH.ready.then(() => {
   });
   dlg.addEventListener('click', async (e) => {
     const t = e.target.closest('[data-g]'); if (!t) return;
+    if (t.dataset.g === 'manual') return settings(true);
     if (t.dataset.g === 'forget') { C.gh.setCfg({ ...C.gh.cfg(), token: '' }); dlg.close(); render(); toast('Desconectado'); }
     if (t.dataset.g === 'delete') {
       const l = C.LESSONS.find((x) => x.id === dlg.dataset.id);
@@ -129,7 +135,7 @@ COH.ready.then(() => {
   document.addEventListener('click', (e) => {
     const t = e.target.closest('[data-g]'); if (!t || t.closest('dialog')) return;
     const g = t.dataset.g, l = C.LESSONS.find((x) => x.id === t.dataset.id);
-    if (g === 'settings') return settings();
+    if (g === 'settings') return settings(C.gh.ok());
     if (g === 'add') return lessonForm(null, t.dataset.t);
     if (g === 'edit') return lessonForm(l);
     if (g === 'up' || g === 'down') {

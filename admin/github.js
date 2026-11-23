@@ -14,7 +14,7 @@
     x.open(method, url(path) + (method === 'GET' ? '?ref=' + encodeURIComponent(c.branch) : ''));
     x.setRequestHeader('Authorization', 'Bearer ' + c.token); x.setRequestHeader('Accept', 'application/vnd.github+json');
     if (onp) x.upload.onprogress = (e) => e.lengthComputable && onp(e.loaded / e.total);
-    x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch {} x.status < 300 ? res(j) : rej(Object.assign(new Error(x.status === 401 ? 'El token no es válido' : x.status === 403 || x.status === 404 ? 'Sin permiso o repositorio no encontrado' : j.message || 'Error ' + x.status), { status: x.status })); };
+    x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch {} x.status < 300 ? res(j) : rej(Object.assign(new Error(x.status === 401 ? (setCfg({ ...cfg(), token: '' }), 'La conexión caducó: vuelve a pulsar Conectar') : x.status === 403 || x.status === 404 ? 'Sin permiso o repositorio no encontrado' : j.message || 'Error ' + x.status), { status: x.status })); };
     x.onerror = () => rej(new Error('Sin conexión con GitHub'));
     x.send(body ? JSON.stringify(body) : null);
   });
@@ -52,5 +52,12 @@
     await saveLessons();
     for (const p of old) await del(p.slice(1), 'Quitar vídeo anterior').catch(() => {});
   }
-  C.gh = { cfg, setCfg, ok, test, saveLessons, uploadVideo, del };
+  // The owner types the CRM password once; the server hands back the token it keeps in its own settings.
+  const unlock = async (password) => {
+    const r = await fetch('/api/token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password }) });
+    if (r.status === 501 || r.status === 404) throw Object.assign(new Error('Este sitio aún no tiene la contraseña configurada'), { manual: true });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'No se pudo conectar');
+    setCfg({ repo: j.repo, branch: j.branch, token: j.token });
+  };
+  C.gh = { cfg, setCfg, ok, test, unlock, saveLessons, uploadVideo, del };
 })();
