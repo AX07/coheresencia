@@ -24,6 +24,18 @@ window.COH = (() => {
     L('r5', 'respiracion', 4, 'Para dormir mejor', 9, 'Cierra el día respirando.'),
     L('r6', 'respiracion', 5, 'Pausa de un minuto', 1, 'Un minuto, donde estés.'),
   ];
+  // The CRM saves the real catalogue (titles, order, video paths) to /lessons.json in the repo; until it exists the sample list above is used.
+  const renumber = () => { const c = {}; LESSONS.forEach((l) => { l.n = c[l.track] = (c[l.track] ?? -1) + 1; l.poster ||= POSTERS[l.n % POSTERS.length]; }); };
+  renumber();
+  const ready = fetch('/lessons.json', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((j) => { if (Array.isArray(j) && j.length) { LESSONS.length = 0; j.forEach((x) => LESSONS.push(x)); renumber(); } }).catch(() => {});
+  // Breathing rhythms: [phase, seconds]. A lesson can point at one with `pace`; the member page then offers it with the video.
+  const PACES = {
+    calma: { name: 'Calma', hint: 'Exhalar más largo que inhalar baja las revoluciones.', seq: [['Inhala', 4], ['Exhala', 6]] },
+    coherente: { name: 'Coherente', hint: 'Un ritmo parejo para encontrar calma y claridad.', seq: [['Inhala', 5], ['Exhala', 5]] },
+    caja: { name: 'Caja', hint: 'Cuatro tiempos iguales. Foco y estabilidad.', seq: [['Inhala', 4], ['Mantén', 4], ['Exhala', 4], ['Mantén', 4]] },
+    dormir: { name: 'Dormir', hint: 'La pausa larga y la exhalación lenta preparan el sueño.', seq: [['Inhala', 4], ['Mantén', 7], ['Exhala', 8]] },
+  };
+  const LEVELS = ['Inicial', 'Intermedio', 'Avanzado'];
   const TRACKS = {
     cuerpo: { name: 'Cuerpo', sub: 'Entrenamiento consciente', seq: true },
     respiracion: { name: 'Respiración', sub: 'Respiración funcional', seq: false },
@@ -60,5 +72,5 @@ window.COH = (() => {
   const link = (m) => `${location.origin}/${m.slug}#${m.token}`;
   const wa = (text, phone) => `https://wa.me/${phone || ''}?text=${encodeURIComponent(text)}`;
   const addMonth = (d) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString(); };
-  return { CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
+  return { PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
 })();

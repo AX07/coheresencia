@@ -1,8 +1,8 @@
-(() => {
+COH.ready.then(() => {
   const C = COH, $ = (s, r = document) => r.querySelector(s), app = $('#app'), sheet = $('#sheet');
   const slug = decodeURIComponent(location.pathname.replace(/^\/|\/$/g, '')), tok = location.hash.slice(1);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let tab = 'hoy', db = C.load(), m = db.members.find((x) => x.slug === slug);
+  let tab = 'inicio', db = C.load(), m = db.members.find((x) => x.slug === slug);
   const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 2600); };
   const contact = (text) => { const links = []; if (C.CFG.whatsapp) links.push(`<a class="btn" href="${C.wa(text, C.CFG.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>`); links.push(`<a class="btn ${C.CFG.whatsapp ? 'ghost' : ''}" href="https://ig.me/m/${C.CFG.instagram}" target="_blank" rel="noopener">Instagram</a>`); return links.join(''); };
 
@@ -16,13 +16,18 @@
   const poster = (l) => `<img src="${l.poster}" alt="" loading="lazy">`;
   const week = () => { const a = C.activeDays(m), now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7)); return ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((n, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); const k = C.dayKey(d); return `<span class="${a.has(k) ? 'on' : ''} ${k === C.dayKey(now) ? 'today' : ''}">${n}<i></i></span>`; }).join(''); };
 
+  const ring = (p, size) => { const R = size * .36, c = 2 * Math.PI * R, h = size / 2; return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${p}% completado"><circle cx="${h}" cy="${h}" r="${R}" fill="none" stroke="rgba(247,240,222,.12)" stroke-width="${size / 17}"/><circle cx="${h}" cy="${h}" r="${R}" fill="none" stroke="#e3bd72" stroke-width="${size / 17}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - p / 100)}" transform="rotate(-90 ${h} ${h})"/><text x="${h}" y="${h + size / 18}" text-anchor="middle" fill="#f7f0de" font-family="Fraunces,serif" font-size="${size / 5}" font-weight="300">${p}%</text></svg>`; };
+  const minutes = () => C.LESSONS.filter((l) => m.done[l.id]).reduce((s, l) => s + l.min, 0);
+  const bars = () => Object.entries(C.TRACKS).map(([k, t]) => { const a = C.doneN(m, k), b = C.lessons(k).length || 1; return `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${t.name}</span><span class="mute">${a}/${b}</span></div><div class="bar" style="margin-top:6px"><i style="width:${(a / b) * 100}%"></i></div></div>`; }).join('');
   const views = {
-    hoy() {
-      const n = C.next(m), st = C.streak(m);
-      return `${n ? `<section class="card next" data-open="${n.id}" style="cursor:pointer"><div class="ph">${poster(n)}</div><div><p class="eyebrow">Tu siguiente paso</p><h2>${esc(n.title)}</h2><p class="mute">${n.min} min · Cuerpo ${n.n + 1} de 10</p><button class="btn sm" style="margin-top:12px">Empezar</button></div></section>` : `<section class="card"><p class="eyebrow">Cuerpo</p><h2>Completaste el recorrido</h2><p class="mute">Repite la rutina completa cuando quieras o pasa a Respiración.</p></section>`}
+    inicio() {
+      const n = C.next(m), st = C.streak(m), p = C.progress(m), cu = C.lessons('cuerpo'), re = C.lessons('respiracion');
+      const door = (tab, name, sub, extra) => `<button class="card door" data-tab="${tab}"><span class="eyebrow">${name}</span><b>${sub}</b><small class="mute">${extra}</small></button>`;
+      return `${n ? `<section class="card next" data-open="${n.id}" style="cursor:pointer"><div class="ph">${poster(n)}</div><div><p class="eyebrow">Tu siguiente paso</p><h2>${esc(n.title)}</h2><p class="mute">${n.min} min · Cuerpo ${n.n + 1} de ${cu.length}</p><button class="btn sm" style="margin-top:12px">Empezar</button></div></section>` : `<section class="card"><p class="eyebrow">Cuerpo</p><h2>Completaste el recorrido</h2><p class="mute">Repite la rutina completa cuando quieras o pasa a Respiración.</p></section>`}
+      <section class="card sum"><div class="sumring">${ring(p, 100)}</div><div class="stats"><div><b>${st}</b><small>días de racha</small></div><div><b>${minutes()}</b><small>minutos</small></div><div><b>${Object.keys(m.done).length}</b><small>lecciones</small></div></div></section>
       <section class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><p class="eyebrow">Esta semana</p><span class="mute">${st ? `Racha de ${st} ${st === 1 ? 'día' : 'días'}` : 'Empieza hoy tu racha'}</span></div><div class="week">${week()}</div></section>
-      <section class="card breathe"><p class="eyebrow">Pausa de un minuto</p><div class="orb" id="orb"><img src="/media/star.png" alt=""></div><p id="orbtxt" class="mute">Pulsa y respira conmigo</p><button class="btn ghost sm" id="orbbtn" style="margin-top:12px">Empezar</button></section>
-      <section class="card"><p class="eyebrow">Tu membresía</p><p>Activa · renueva el ${C.fmt(m.renew)}</p></section>`;
+      <div class="doors">${door('cuerpo', 'Cuerpo', `${C.doneN(m, 'cuerpo')}/${cu.length}`, 'Entrenamiento')}${door('respiracion', 'Respirar', `${C.doneN(m, 'respiracion')}/${re.length}`, 'Respiración')}${door('uno', '1:1', 'Sesiones', 'con ' + C.CFG.coach)}</div>
+      <section class="card breathe"><p class="eyebrow">Pausa de un minuto</p><div class="orb" id="orb"><img src="/media/star.png" alt=""></div><p class="mute">Inhala 4, exhala 6. Yo te marco el ritmo.</p><button class="btn ghost sm" data-pacer="calma" style="margin-top:12px">Respirar ahora</button></section>`;
     },
     cuerpo() {
       const cur = C.next(m);
@@ -31,14 +36,15 @@
     },
     respiracion() {
       return `<div><p class="eyebrow">Respiración</p><h2 style="font-size:30px;margin-top:6px">Respiración funcional</h2><p class="mute" style="margin-top:6px">Acceso libre, sin orden. Elige según cómo te sientas hoy.</p></div>
-      <div class="grid">${C.lessons('respiracion').map((l) => `<article class="card tile ${m.done[l.id] ? 'done' : ''}" data-open="${l.id}"><div class="ph">${poster(l)}</div><div class="t"><h3>${esc(l.title)}</h3><small>${l.min} min${m.done[l.id] ? ' · hecha ✓' : ''}</small></div></article>`).join('')}</div>`;
+      <section class="card breathe"><p class="eyebrow">Respirar con ritmo</p><p class="mute" style="margin-top:6px">Un aro que se abre y se cierra, con los segundos a la vista. Elige el ritmo y el tiempo.</p><div class="pchips" style="margin-top:14px">${Object.entries(C.PACES).map(([k, v]) => `<button class="pill" data-pacer="${k}" data-mins="3">${v.name}</button>`).join('')}</div></section>
+      <div class="grid">${C.lessons('respiracion').map((l) => `<article class="card tile ${m.done[l.id] ? 'done' : ''}" data-open="${l.id}"><div class="ph">${poster(l)}</div><div class="t"><h3>${esc(l.title)}</h3><small>${l.min} min${l.level ? ' · ' + esc(l.level) : ''}${m.done[l.id] ? ' · hecha ✓' : ''}</small></div></article>`).join('')}</div>`;
     },
-    progreso() {
-      const p = C.progress(m), R = 54, circ = 2 * Math.PI * R, all = C.LESSONS.length, n = Object.keys(m.done).length;
-      const mins = C.LESSONS.filter((l) => m.done[l.id]).reduce((s, l) => s + l.min, 0);
-      return `<section class="card" style="text-align:center"><p class="eyebrow">Tu progreso</p><div class="ring"><svg width="150" height="150" viewBox="0 0 150 150"><circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(247,240,222,.12)" stroke-width="9"/><circle cx="75" cy="75" r="${R}" fill="none" stroke="#e3bd72" stroke-width="9" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ * (1 - p / 100)}" transform="rotate(-90 75 75)"/><text x="75" y="83" text-anchor="middle" fill="#f7f0de" font-family="Fraunces,serif" font-size="30" font-weight="300">${p}%</text></svg></div><p class="mute">${n} de ${all} lecciones</p></section>
-      <section class="card stats"><div><b>${C.streak(m)}</b><small>días de racha</small></div><div><b>${mins}</b><small>minutos</small></div><div><b>${C.doneN(m, 'cuerpo')}/10</b><small>Cuerpo</small></div></section>
-      <section class="card"><p class="eyebrow">Por recorrido</p>${Object.entries(C.TRACKS).map(([k, t]) => { const a = C.doneN(m, k), b = C.lessons(k).length; return `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${t.name}</span><span class="mute">${a}/${b}</span></div><div class="bar" style="margin-top:6px"><i style="width:${(a / b) * 100}%"></i></div></div>`; }).join('')}</section>`;
+    perfil() {
+      const p = C.progress(m);
+      return `<section class="card prof"><span class="avatar" aria-hidden="true">${esc(first[0] || '·')}</span><div><h2>${esc(m.name)}</h2><p class="mute">Miembro desde ${C.fmt(m.start)}</p></div></section>
+      <section class="card"><p class="eyebrow">Tu membresía</p><p style="margin-top:6px">Renueva el ${C.fmt(m.renew)} · ${C.daysLeft(m) > 0 ? `faltan ${C.daysLeft(m)} días` : 'toca renovar'}</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">${contact(`Hola ${C.CFG.coach}, soy ${first}. Te escribo por mi membresía.`)}</div></section>
+      <section class="card" style="text-align:center"><p class="eyebrow">Tu progreso</p><div class="ring" style="margin:10px 0">${ring(p, 150)}</div><p class="mute">${Object.keys(m.done).length} de ${C.LESSONS.length} lecciones · ${minutes()} min · racha de ${C.streak(m)}</p></section>
+      <section class="card"><p class="eyebrow">Por recorrido</p>${bars()}</section>`;
     },
     uno() {
       return `<section class="card"><p class="eyebrow">Trabajo interno</p><h2 style="font-size:30px;margin:8px 0 10px">Sesiones uno a uno</h2><p class="mute">Respiración activa y acompañamiento profundo con ${C.CFG.coach}, online o presencial. Se reservan aparte de la membresía.</p></section>
@@ -48,36 +54,28 @@
 
   function render() {
     app.innerHTML = `<header class="top"><img src="/media/logo-mark.png" alt="Coheresencia"><div><p class="eyebrow">Mi práctica</p><h1>Hola, ${esc(first)}</h1></div><span class="chip ${C.status(m)[1]}">${C.status(m)[0]}</span></header><main>${views[tab]()}</main>
-    <nav class="tabs"><div>${[['hoy', 'Hoy'], ['cuerpo', 'Cuerpo'], ['respiracion', 'Respirar'], ['progreso', 'Progreso'], ['uno', '1:1']].map(([k, t]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${t}</button>`).join('')}</div></nav>`;
+    <nav class="tabs"><div>${[['inicio', 'Inicio'], ['cuerpo', 'Cuerpo'], ['respiracion', 'Respirar'], ['uno', '1:1'], ['perfil', 'Perfil']].map(([k, t]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${t}</button>`).join('')}</div></nav>`;
   }
   const go = (t) => { tab = t; render(); scrollTo(0, 0); };
 
   function openLesson(id) {
     const l = C.LESSONS.find((x) => x.id === id), dn = !!m.done[id];
-    sheet.innerHTML = `<div class="player">${poster(l)}<button class="close" data-close>‹ Volver</button><button class="play" aria-label="Reproducir" data-play></button><span class="tag">Vídeo de ejemplo</span></div>
-    <div class="body"><p class="eyebrow">${C.TRACKS[l.track].name}${l.track === 'cuerpo' ? ` · ${l.n + 1} de 10` : ''} · ${l.min} min</p><h2>${esc(l.title)}</h2><p class="mute">${esc(l.text)}</p>
+    sheet.innerHTML = `<div class="player">${l.video ? `<video src="${esc(l.video)}" poster="${esc(l.poster)}" controls playsinline preload="metadata" controlslist="nodownload"></video>` : `${poster(l)}<button class="play" aria-label="Reproducir" data-play></button><span class="tag">Vídeo próximamente</span>`}<button class="close" data-close>‹ Volver</button></div>
+    <div class="body"><p class="eyebrow">${C.TRACKS[l.track].name}${l.track === 'cuerpo' ? ` · ${l.n + 1} de ${C.lessons('cuerpo').length}` : ''} · ${l.min} min${l.level ? ' · ' + esc(l.level) : ''}</p><h2>${esc(l.title)}</h2><p class="mute">${esc(l.text)}</p>
+    ${l.pace && C.PACES[l.pace] ? `<button class="btn ghost" data-pacer="${l.pace}" data-mins="${Math.max(1, Math.min(10, l.min))}">Respirar con ritmo · ${C.PACES[l.pace].name}</button>` : ''}
     <button class="btn" data-done="${id}" ${dn ? 'style="background:transparent;color:var(--gold)"' : ''}>${dn ? '✓ Hecha · toca para deshacer' : 'Marcar como hecha'}</button></div>`;
     sheet.classList.add('on'); document.body.style.overflow = 'hidden';
   }
-  const closeSheet = () => { sheet.classList.remove('on'); document.body.style.overflow = ''; };
-
-  // the one-minute breathing orb: 4 s in, 6 s out
-  let breathing = null;
-  function breathe() {
-    const orb = $('#orb'), t = $('#orbtxt'), b = $('#orbbtn');
-    if (breathing) { clearInterval(breathing); breathing = null; orb.className = 'orb'; t.textContent = 'Pulsa y respira conmigo'; b.textContent = 'Empezar'; return; }
-    let i = 0, step = () => { const inh = i % 2 === 0; orb.className = 'orb ' + (inh ? 'in' : 'out'); t.textContent = inh ? 'Inhala…' : 'Exhala…'; i++; };
-    b.textContent = 'Parar'; step(); breathing = setInterval(step, 5000);
-  }
+  const closeSheet = () => { sheet.querySelector('video')?.pause(); sheet.classList.remove('on'); document.body.style.overflow = ''; };
 
   document.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-tab],[data-open],[data-locked],[data-close],[data-play],[data-done],#orbbtn'); if (!t) return;
+    const t = e.target.closest('[data-tab],[data-open],[data-locked],[data-close],[data-play],[data-done],[data-pacer]'); if (!t) return;
     if (t.dataset.tab) return go(t.dataset.tab);
     if (t.dataset.open) return openLesson(t.dataset.open);
     if (t.dataset.locked) return toast('Termina la lección anterior para abrir esta');
     if (t.dataset.close !== undefined) { closeSheet(); return render(); }
-    if (t.dataset.play !== undefined) return toast('Aquí se reproducirá el vídeo de la lección');
-    if (t.id === 'orbbtn') return breathe();
+    if (t.dataset.play !== undefined) return toast('Este vídeo aún no está subido');
+    if (t.dataset.pacer) return COH.pacer.open(t.dataset.pacer, +t.dataset.mins || 1);
     if (t.dataset.done) {
       const id = t.dataset.done, l = C.LESSONS.find((x) => x.id === id);
       if (m.done[id]) { const nx = l.track === 'cuerpo' && C.lessons('cuerpo')[l.n + 1]; if (nx && m.done[nx.id]) return toast('Primero deshaz la siguiente'); delete m.done[id]; toast('Lección desmarcada'); }
@@ -86,4 +84,4 @@
     }
   });
   render();
-})();
+});

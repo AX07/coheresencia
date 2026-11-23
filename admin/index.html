@@ -19,7 +19,7 @@
 .tabs button{background:none;border:0;padding:12px 16px;color:var(--mute);cursor:pointer;border-bottom:2px solid transparent;font-size:15px}
 .tabs button.on{color:var(--gold);border-color:var(--gold)}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stats b{display:block;font:300 36px/1 var(--serif);color:var(--gold)}.stats small{color:var(--mute);font-size:13px}
+.stats b{display:block;font:300 36px/1 var(--serif);color:var(--cream)}.stats small{color:var(--mute);font-size:13px}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .tools input{flex:1;min-width:160px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:10px 16px}
 .pill{background:none;border:1px solid var(--line);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--mute)}
@@ -40,9 +40,12 @@ textarea{min-height:90px;resize:vertical}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
 .linkbox{font-size:13px;word-break:break-all;background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
 .tr{margin:22px 0 8px;display:flex;align-items:baseline;gap:10px}.tr h2{font-size:24px}
-.les{display:grid;grid-template-columns:36px 1fr auto auto;gap:12px;align-items:center;padding:12px 16px}
-.les i{font-style:normal;color:var(--gold);text-align:center}
-@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.mrow{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.les{grid-template-columns:30px 1fr auto}.les .chip:last-child{display:none}}
+\.les{display:flex;align-items:center;gap:12px;padding:12px 16px}.les>div:nth-of-type(1){flex:1;min-width:0}
+.les .thumb{width:36px;height:48px;object-fit:cover;border-radius:8px}
+.les .ic{padding:6px 10px}
+.upbar{min-width:150px}.upbar small{font-size:12px}
+.gh{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:6px}.gh.ok{border-color:rgba(159,201,138,.4)}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.mrow{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.les{flex-wrap:wrap}.les>div:nth-of-type(1){flex-basis:calc(100% - 60px)}}
 </style>
 </head>
 <body>
@@ -55,6 +58,7 @@ textarea{min-height:90px;resize:vertical}
 <dialog id="dlg"></dialog>
 <div class="toast" id="toast" role="status"></div>
 <script src="/data.js"></script>
+<script src="/admin/github.js"></script>
 <script src="/admin/admin.js"></script>
 </body>
 </html>

@@ -55,12 +55,19 @@ main{padding:12px 0 120px;display:grid;gap:16px}
 .tile div.t{padding:12px 14px 14px}.tile h3{font-size:17px}.tile small{color:var(--mute)}
 .tile.done{border-color:rgba(227,189,114,.6)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
-.stats b{display:block;font:300 34px/1 var(--serif);color:var(--gold)}
+.sum{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}.sum .stats{align-content:center}.sumring{display:grid;place-items:center}
+.doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.door{display:grid;gap:4px;justify-items:start;text-align:left;padding:16px;cursor:pointer;color:inherit;transition:transform .3s,border-color .3s}.door:hover{transform:translateY(-2px);border-color:rgba(227,189,114,.5)}
+.door b{font:300 22px/1.1 var(--serif)}.door small{font-size:12px}
+.prof{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}.prof h2{font-size:24px}
+.avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font:300 24px var(--serif);color:var(--ink);background:linear-gradient(135deg,var(--gold),#b78a3f)}
+.stats b{display:block;font:300 34px/1 var(--serif);color:var(--cream)}
 .stats small{color:var(--mute);font-size:12px}
 .ring{display:grid;place-items:center;margin:6px 0}
 .sheet{position:fixed;inset:0;z-index:60;background:var(--ink);overflow:auto;transform:translateY(100%);transition:transform .45s cubic-bezier(.2,.8,.2,1);visibility:hidden}
 .sheet.on{transform:none;visibility:visible}
 .player{position:relative;aspect-ratio:4/5;max-height:62svh;width:100%;background:#000;overflow:hidden;display:grid;place-items:center;border-radius:0 0 22px 22px}
+.player video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
 .player img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75}
 .player .play{position:relative;width:72px;height:72px;border-radius:50%;background:rgba(247,240,222,.2);border:1px solid rgba(247,240,222,.6);backdrop-filter:blur(8px);cursor:pointer}
 .player .play::before{content:"";position:absolute;left:29px;top:22px;border-style:solid;border-width:14px 0 14px 22px;border-color:transparent transparent transparent var(--cream)}
@@ -78,6 +85,7 @@ main{padding:12px 0 120px;display:grid;gap:16px}
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Lección"></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="/data.js"></script>
+<script src="/pacer.js"></script>
 <script src="/miembro.js"></script>
 </body>
 </html>
