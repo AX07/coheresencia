@@ -27,11 +27,12 @@ COH.ready.then(() => {
     const banner = `<div class="card gh ${on ? 'ok' : ''}"><div><b>${on ? 'Subida de vídeos activa' : 'Desbloquea la subida de vídeos'}</b><small class="mute" style="display:block">${on ? 'Cada vídeo que subes se guarda en tu web, que se actualiza sola en ~1 minuto. (' + esc(g.repo) + ')' : 'Los vídeos se guardan dentro de tu web, sin Vimeo ni YouTube. Escribe la contraseña del CRM una sola vez.'}</small></div><button class="btn sm ${on ? 'ghost' : ''}" data-g="settings">${on ? 'Ajustes' : 'Desbloquear'}</button></div>`;
     return banner + Object.entries(C.TRACKS).map(([k, t]) => { const ls = C.lessons(k); return `<div class="tr"><h2>${t.name}</h2><span class="mute">${t.sub} · ${t.seq ? 'se desbloquea en orden' : 'acceso libre'}</span><button class="btn sm ghost" style="margin-left:auto" data-g="add" data-t="${k}">+ Lección</button></div><div class="list">${ls.map((l, i) => {
       const busy = up && up.id === l.id;
-      const right = busy ? `<div class="upbar"><div class="bar"><i style="width:${Math.round(up.pct * 100)}%"></i></div><small class="mute">${esc(up.msg)}</small></div>` : `<span class="chip ${l.video ? 'ok' : 'warn'}">${l.video ? 'Vídeo subido' : 'Sin vídeo'}</span><label class="btn sm ${l.video ? 'ghost' : ''}" ${up ? 'style="opacity:.4;pointer-events:none"' : ''}>${l.video ? 'Reemplazar' : 'Subir vídeo'}<input type="file" accept="video/mp4,video/webm" hidden data-up="${l.id}"></label>`;
-      return `<article class="card les"><img class="thumb" src="${esc(l.poster)}" alt=""><div><b style="font-weight:500">${i + 1}. ${esc(l.title)}</b><small class="mute" style="display:block">${l.min} min</small></div>${right}<span class="acts" style="flex-wrap:nowrap"><button class="btn sm ghost ic" data-g="up" data-id="${l.id}" ${i ? '' : 'disabled'} aria-label="Subir">↑</button><button class="btn sm ghost ic" data-g="down" data-id="${l.id}" ${i < ls.length - 1 ? '' : 'disabled'} aria-label="Bajar">↓</button><button class="btn sm ghost" data-g="edit" data-id="${l.id}">Editar</button></span></article>`;
-    }).join('')}</div>`; }).join('') + '<p class="mute" style="margin-top:22px">El orden de Cuerpo es el orden en que se desbloquea. Vídeos en .mp4 o .webm, hasta 90 MB cada uno: exporta a 720p y pesan poco.</p>';
+      const n = l.videos.length, right = busy ? `<div class="upbar"><div class="bar"><i style="width:${Math.round(up.pct * 100)}%"></i></div><small class="mute">${esc(up.msg)}</small></div>` : `<span class="chip ${n ? 'ok' : 'warn'}">${n ? n + (n > 1 ? ' vídeos' : ' vídeo') : 'Sin vídeo'}</span><label class="btn sm ${n ? 'ghost' : ''}" ${up ? 'style="opacity:.4;pointer-events:none"' : ''}>${n ? '+ Vídeo' : 'Subir vídeo'}<input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-up="${l.id}"></label>`;
+      return `<article class="card les"><img class="thumb" src="${esc(l.poster)}" alt=""><div><b style="font-weight:500">${i + 1}. ${esc(l.title)}</b><small class="mute" style="display:block">${l.min} min${l.circuit ? ' · circuito de ' + l.circuit + ' min' : ''}</small></div>${right}<span class="acts" style="flex-wrap:nowrap"><button class="btn sm ghost ic" data-g="up" data-id="${l.id}" ${i ? '' : 'disabled'} aria-label="Subir">↑</button><button class="btn sm ghost ic" data-g="down" data-id="${l.id}" ${i < ls.length - 1 ? '' : 'disabled'} aria-label="Bajar">↓</button><button class="btn sm ghost" data-g="edit" data-id="${l.id}">Editar</button></span></article>`;
+    }).join('')}</div>`; }).join('') + '<p class="mute" style="margin-top:22px">El orden de Cuerpo es el orden en que se desbloquea. Una lección puede tener varios vídeos. Si un vídeo pesa mucho o no es WebM, el CRM lo convierte a WebM al subirlo (tarda lo que dura el vídeo y hay que dejar la pestaña abierta). Máximo 90 MB por vídeo.</p>';
   }
   const persist = async (msg) => { if (!C.gh.ok()) { settings(); return false; } try { toast('Guardando…'); await C.gh.saveLessons(); toast(msg || 'Guardado. La web se actualiza en ~1 minuto'); return true; } catch (e) { toast(e.message); return false; } };
+  const persistTexts = async () => { if (!C.gh.ok()) return settings(); try { toast('Guardando…'); await C.gh.saveContent(); toast('Textos guardados. La web se actualiza en ~1 minuto'); } catch (e) { toast(e.message); } };
   function settings(manual) {
     const g = C.gh.cfg();
     if (!manual) { dlg.innerHTML = `<form class="dlg" id="pf"><h2>Desbloquear subida de vídeos</h2><p class="mute">Escribe la contraseña del CRM. Solo hace falta una vez en este navegador.</p>
@@ -51,12 +52,18 @@ COH.ready.then(() => {
     <label>Descripción<textarea name="text" maxlength="400">${esc(l?.text || '')}</textarea></label>
     <div class="two"><label>Nivel<select name="level"><option value="">Sin nivel</option>${C.LEVELS.map((v) => `<option ${v === l?.level ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Ritmo de respiración (opcional)<select name="pace"><option value="">Ninguno</option>${Object.entries(C.PACES).map(([k, v]) => `<option value="${k}" ${k === l?.pace ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
     <label>Duración (minutos, se rellena sola al subir el vídeo)<input name="min" type="number" min="1" max="180" value="${l?.min || 10}"></label>
+    ${(track || l?.track) === 'cuerpo' ? `<label>Circuito: tiempo en minutos que el miembro tiene para hacer rondas (0 = sin circuito)<input name="circuit" type="number" min="0" max="120" value="${l?.circuit || 0}"></label>` : ''}
+    ${l ? `<div><p class="eyebrow">Vídeos de la lección</p>${l.videos.map((v, i) => `<div class="acts" style="justify-content:space-between;align-items:center;margin-top:8px"><span>Vídeo ${i + 1}${v.min ? ' · ' + v.min + ' min' : ''}</span><span class="acts"><label class="btn sm ghost">Reemplazar<input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-up="${l.id}" data-idx="${i}"></label><button type="button" class="btn sm ghost" data-g="rmvid" data-i="${i}" style="color:var(--bad)">Quitar</button></span></div>`).join('') || '<p class="mute">Aún no hay vídeos.</p>'}<label class="btn sm" style="margin-top:10px">+ Añadir vídeo<input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-up="${l.id}"></label></div>` : ''}
     <div class="acts"><button class="btn" type="submit">Guardar</button><button class="btn ghost" type="button" data-x>Cancelar</button>${l ? '<button class="btn ghost" type="button" data-g="delete" style="margin-left:auto;color:var(--bad)">Eliminar</button>' : ''}</div></form>`;
     dlg.dataset.id = l?.id || ''; dlg.dataset.t = track || l?.track; dlg.showModal();
   }
 
-  const render = () => { view.innerHTML = tab === 'miembros' ? members() : content(); document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab)); };
+  function textos() {
+    return `<p class="mute" style="margin-bottom:14px">Cambia aquí los textos que ven los miembros en su panel. Se guardan en tu web y se actualizan en ~1 minuto.</p><div class="list">${Object.entries(C.TEXTS).map(([k, [label, def]]) => `<label class="card" style="padding:14px 16px">${label}<textarea data-tx="${k}" maxlength="400" rows="2">${esc(C.T(k))}</textarea></label>`).join('')}</div><div class="acts" style="margin-top:14px"><button class="btn" data-g="savetx">Guardar textos</button><button class="btn ghost" data-g="resettx">Volver a los textos originales</button></div>`;
+  }
+  const render = () => { view.innerHTML = tab === 'miembros' ? members() : tab === 'contenido' ? content() : textos(); document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab)); };
 
+  const localDT = (iso) => { const d = new Date(iso), p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
   function openMember(id) {
     const m = db.members.find((x) => x.id === id), [s, c] = C.status(m);
     dlg.innerHTML = `<div class="dlg"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><span class="chip ${c}">${s}</span><h2 style="margin-top:8px">${esc(m.name)}</h2><p class="mute">Desde ${C.fmt(m.start)} · renueva ${C.fmt(m.renew)}</p></div><button class="btn sm ghost" data-x>Cerrar</button></div>
@@ -66,6 +73,10 @@ COH.ready.then(() => {
     <div class="two"><label>Renueva el<input type="date" data-f="renew" value="${m.renew.slice(0, 10)}"></label><label>Origen<select data-f="source">${['WhatsApp', 'Instagram', 'En persona', 'Otro'].map((o) => `<option ${o === m.source ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>
     <div class="acts"><button class="btn sm" data-a="renew">Renovar +1 mes</button><button class="btn sm ghost" data-a="renewmsg">Copiar aviso de renovación</button><button class="btn sm ghost" data-a="newlink">Enlace nuevo</button><button class="btn sm ghost" data-a="toggle">${m.active ? 'Apagar enlace' : 'Encender enlace'}</button></div>
     <div><p class="eyebrow">Progreso</p>${Object.entries(C.TRACKS).map(([k, t]) => `<div style="margin-top:10px;display:flex;justify-content:space-between"><span>${t.name}</span><span class="mute">${C.doneN(m, k)}/${C.lessons(k).length}</span></div><div class="bar" style="margin-top:4px"><i style="width:${(C.doneN(m, k) / C.lessons(k).length) * 100}%"></i></div>`).join('')}<p class="mute" style="margin-top:10px">Racha: ${C.streak(m)} días · última actividad: ${C.ago(C.lastActive(m)).toLowerCase()}</p></div>
+    <div><p class="eyebrow">Sesión 1:1</p><p style="margin-top:6px">${m.session ? C.fmtDT(m.session.at) + ' · ' + esc(m.session.mode) : '<span class="mute">Sin sesión confirmada. Cuando el miembro te escriba y acordéis hora, ponla aquí y le aparece en su panel con cuenta atrás.</span>'}</p>
+    <div class="two" style="margin-top:8px"><label>Día y hora<input type="datetime-local" data-s="at" value="${m.session ? localDT(m.session.at) : ''}"></label><label>Modo<select data-s="mode">${['Online', 'Presencial'].map((o) => `<option ${m.session && m.session.mode === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>
+    <div class="acts" style="margin-top:8px"><button class="btn sm" data-a="session">Confirmar sesión</button><button class="btn sm ghost" data-a="sessionmsg">Copiar mensaje de confirmación</button>${m.session ? '<button class="btn sm ghost" data-a="nosession">Quitar</button>' : ''}</div></div>
+    ${(() => { const rows = C.LESSONS.filter((l) => (m.rounds || {})[l.id]).map((l) => `<div style="display:flex;justify-content:space-between;gap:10px;margin-top:6px"><span>${esc(l.title)}</span><span class="mute">${m.rounds[l.id].map((x) => x.n).join(' · ')} rondas</span></div>`); return rows.length ? `<div><p class="eyebrow">Rondas de los circuitos</p>${rows.join('')}</div>` : ''; })()}
     <label>Notas privadas (el miembro no las ve)<textarea data-f="notes">${esc(m.notes)}</textarea></label>
     <div class="acts"><button class="btn sm ghost" data-a="del" style="color:var(--bad)">Eliminar miembro</button></div></div>`;
     dlg.dataset.id = id; dlg.showModal();
@@ -92,6 +103,9 @@ COH.ready.then(() => {
   dlg.addEventListener('click', (e) => {
     const t = e.target.closest('[data-x],[data-a]'); if (!t) return; if (t.dataset.x !== undefined) return dlg.close();
     const m = db.members.find((x) => x.id === dlg.dataset.id), a = t.dataset.a;
+    if (a === 'session') { const at = dlg.querySelector('[data-s=at]').value; if (!at) return toast('Elige el día y la hora'); m.session = { at: new Date(at).toISOString(), mode: dlg.querySelector('[data-s=mode]').value }; save(); toast('Sesión confirmada: el miembro la ve en su panel'); return openMember(m.id); }
+    if (a === 'nosession') { delete m.session; save(); return openMember(m.id); }
+    if (a === 'sessionmsg') { if (!m.session) return toast('Primero confirma la sesión'); return copy(`Hola ${first(m)}, confirmado: tu sesión 1:1 es el ${C.fmtDT(m.session.at)} (${m.session.mode.toLowerCase()}). La verás en tu panel con la cuenta atrás: ${C.link(m)}`); }
     if (a === 'copylink') copy(C.link(m)); else if (a === 'copywelcome') copy(welcome(m)); else if (a === 'renewmsg') copy(renewMsg(m));
     else if (a === 'renew') { m.renew = C.addMonth(new Date(m.renew) > new Date() ? m.renew : new Date()); m.active = true; save(); toast('Renovada hasta ' + C.fmt(m.renew)); render(); openMember(m.id); }
     else if (a === 'newlink') { if (confirm('El enlace anterior dejará de funcionar. ¿Crear uno nuevo?')) { m.token = C.token(); save(); toast('Enlace nuevo creado'); openMember(m.id); } }
@@ -118,13 +132,17 @@ COH.ready.then(() => {
     } else {
       let l = C.LESSONS.find((x) => x.id === dlg.dataset.id);
       if (!l) { l = { id: 'x' + Date.now().toString(36), track: dlg.dataset.t }; C.LESSONS.push(l); }
-      Object.assign(l, { title: d.title.trim(), text: d.text.trim(), min: +d.min || 10, level: d.level || undefined, pace: d.pace || undefined }); C.renumber(); dlg.close(); render(); await persist();
+      Object.assign(l, { title: d.title.trim(), text: d.text.trim(), min: +d.min || 10, circuit: +d.circuit || undefined, level: d.level || undefined, pace: d.pace || undefined }); C.renumber(); dlg.close(); render(); await persist();
     }
   });
   dlg.addEventListener('click', async (e) => {
     const t = e.target.closest('[data-g]'); if (!t) return;
     if (t.dataset.g === 'manual') return settings(true);
     if (t.dataset.g === 'forget') { C.gh.setCfg({ ...C.gh.cfg(), token: '' }); dlg.close(); render(); toast('Desconectado'); }
+    if (t.dataset.g === 'rmvid') {
+      const l = C.LESSONS.find((x) => x.id === dlg.dataset.id); if (!confirm('¿Quitar este vídeo de la lección?')) return;
+      try { toast('Quitando…'); await C.gh.removeVideo(l, +t.dataset.i); lessonForm(l); render(); toast('Vídeo quitado'); } catch (x) { toast(x.message); }
+    }
     if (t.dataset.g === 'delete') {
       const l = C.LESSONS.find((x) => x.id === dlg.dataset.id);
       if (!confirm(`¿Eliminar «${l.title}»? Los miembros que la hicieron perderán ese progreso.`)) return;
@@ -136,6 +154,8 @@ COH.ready.then(() => {
     const t = e.target.closest('[data-g]'); if (!t || t.closest('dialog')) return;
     const g = t.dataset.g, l = C.LESSONS.find((x) => x.id === t.dataset.id);
     if (g === 'settings') return settings(C.gh.ok());
+    if (g === 'resettx') { C.setTexts({}); render(); return persistTexts(); }
+    if (g === 'savetx') { const o = {}; document.querySelectorAll('[data-tx]').forEach((x) => { const v = x.value.trim(); if (v && v !== C.TEXTS[x.dataset.tx][1]) o[x.dataset.tx] = v; }); C.setTexts(o); return persistTexts(); }
     if (g === 'add') return lessonForm(null, t.dataset.t);
     if (g === 'edit') return lessonForm(l);
     if (g === 'up' || g === 'down') {
@@ -147,9 +167,11 @@ COH.ready.then(() => {
     const inp = e.target.closest('[data-up]'); if (!inp) return;
     const l = C.LESSONS.find((x) => x.id === inp.dataset.up), file = inp.files[0]; if (!file) return;
     if (!C.gh.ok()) { inp.value = ''; return settings(); }
+    const idx = inp.dataset.idx != null ? +inp.dataset.idx : undefined; if (dlg.open) dlg.close();
     up = { id: l.id, pct: 0, msg: 'Preparando…' }; render();
+    const show = (pct, msg) => { up.pct = pct; up.msg = msg; const b = document.querySelector('.upbar'); if (b) { b.querySelector('i').style.width = pct * 100 + '%'; b.querySelector('small').textContent = msg; } };
     try {
-      await C.gh.uploadVideo(l, file, (p) => { up.pct = p; up.msg = p < 1 ? `Subiendo ${Math.round(p * 100)}%` : 'Guardando…'; const b = document.querySelector('.upbar'); if (b) { b.querySelector('i').style.width = p * 100 + '%'; b.querySelector('small').textContent = up.msg; } });
+      await C.gh.uploadVideo(l, file, { idx, onst: (m) => show(0, m), onp: (p) => show(p, p < 1 ? `Subiendo ${Math.round(p * 100)}%` : 'Guardando…') });
       up = null; render(); toast('Vídeo subido. La web se actualiza en ~1 minuto');
     } catch (x) { fail(x); }
   });

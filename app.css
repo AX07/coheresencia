@@ -50,3 +50,21 @@ body::before{background:radial-gradient(120% 55% at 50% 108%,rgba(255,170,110,.3
 .pring i{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(227,189,114,.5),rgba(227,189,114,.06) 70%);border:1px solid rgba(227,189,114,.55);box-shadow:0 0 70px rgba(227,189,114,.22);transform:scale(.6);transition:transform linear}
 .pring.idle i{transform:scale(.8);animation:breathe 5s ease-in-out infinite}
 .cue{position:relative;display:grid;gap:2px}.cue b{font:300 26px var(--serif)}.cue span{font:300 60px/1 var(--serif);font-variant-numeric:tabular-nums}.cue .pat{font-size:20px;letter-spacing:.2em;color:var(--mute)}
+
+/* 1:1 sessions, circuit timer, forms */
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:grid;gap:6px;font-size:13px;color:var(--mute)}
+.card input,.card select{background:rgba(5,8,20,.5);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:var(--cream);width:100%;min-height:44px}
+.sess h2{font-size:26px;margin:6px 0 2px}.sess h2::first-letter{text-transform:uppercase}
+.count{display:flex;gap:10px;margin:14px 0}
+.count span{flex:1;text-align:center;font-size:12px;color:var(--mute);background:rgba(247,240,222,.05);border:1px solid var(--line);border-radius:16px;padding:10px 4px}
+.count b{display:block;font:300 34px/1 var(--serif);color:var(--gold);font-variant-numeric:tabular-nums}
+.msgprev{font-size:14px;border-left:2px solid var(--gold);padding-left:12px;font-style:italic}
+.circ{text-align:center}
+.clock{font:300 64px/1 var(--serif);font-variant-numeric:tabular-nums;color:var(--gold);margin:14px 0}
+.rounds{display:grid;justify-items:center;gap:12px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.stepper{display:flex;align-items:center;gap:22px}
+.stepper button{width:52px;height:52px;border-radius:50%;background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:26px;cursor:pointer}
+.stepper b{font:300 48px/1 var(--serif);min-width:2ch;font-variant-numeric:tabular-nums}
+@media(max-width:420px){.two{grid-template-columns:1fr}}

@@ -25,9 +25,30 @@ window.COH = (() => {
     L('r6', 'respiracion', 5, 'Pausa de un minuto', 1, 'Un minuto, donde estés.'),
   ];
   // The CRM saves the real catalogue (titles, order, video paths) to /lessons.json in the repo; until it exists the sample list above is used.
-  const renumber = () => { const c = {}; LESSONS.forEach((l) => { l.n = c[l.track] = (c[l.track] ?? -1) + 1; l.poster ||= POSTERS[l.n % POSTERS.length]; }); };
+  const renumber = () => { const c = {}; LESSONS.forEach((l) => { l.n = c[l.track] = (c[l.track] ?? -1) + 1; l.poster ||= POSTERS[l.n % POSTERS.length]; l.videos ||= l.video ? [{ src: l.video }] : []; delete l.video; }); };
   renumber();
-  const ready = fetch('/lessons.json', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((j) => { if (Array.isArray(j) && j.length) { LESSONS.length = 0; j.forEach((x) => LESSONS.push(x)); renumber(); } }).catch(() => {});
+  // Texts Alejandro can change from the CRM (Textos tab). The CRM saves only the ones he changed to /content.json.
+  const TEXTS = {
+    'cuerpo.titulo': ['Cuerpo · título', 'Entrenamiento consciente'],
+    'cuerpo.texto': ['Cuerpo · descripción', 'Cada vídeo se desbloquea cuando marcas el anterior como hecho. A tu ritmo.'],
+    'circuito.texto': ['Circuito · explicación', 'Haz el circuito del vídeo tantas veces como puedas hasta que suene el aviso. Después apunta cuántas rondas completaste.'],
+    'respiracion.titulo': ['Respiración · título', 'Respiración funcional'],
+    'respiracion.texto': ['Respiración · descripción', 'Acceso libre, sin orden. Elige según cómo te sientas hoy.'],
+    'ritmo.texto': ['Respiración · ritmo guiado', 'Un aro que se abre y se cierra, con los segundos a la vista. Elige el ritmo y el tiempo.'],
+    'uno.titulo': ['1:1 · título', 'Sesiones uno a uno'],
+    'uno.texto': ['1:1 · descripción', 'Respiración activa y acompañamiento profundo con Alejandro, online o presencial. Se reservan aparte del curso.'],
+    'uno.pasos': ['1:1 · cómo se reserva', 'Elige el día y la hora que mejor te vengan y envíale el mensaje. Alejandro te lo confirma o te propone otra hora, y verás tu cita aquí con la cuenta atrás.'],
+    'precio.curso': ['Precio del curso (Cuerpo + Respiración)', 'Precio por confirmar'],
+    'precio.uno': ['Precio de la sesión 1:1', 'Precio por confirmar'],
+  };
+  let OVERRIDE = {};
+  const T = (k) => (OVERRIDE[k] ?? TEXTS[k][1]);
+  const getJ = (u) => fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const ready = Promise.all([getJ('/lessons.json'), getJ('/content.json')]).then(([j, c]) => {
+    if (Array.isArray(j) && j.length) { LESSONS.length = 0; j.forEach((x) => LESSONS.push(x)); }
+    if (c && c.texts) OVERRIDE = c.texts;
+    renumber();
+  });
   // Breathing rhythms: [phase, seconds]. A lesson can point at one with `pace`; the member page then offers it with the video.
   const PACES = {
     calma: { name: 'Calma', hint: 'Exhalar más largo que inhalar baja las revoluciones.', seq: [['Inhala', 4], ['Exhala', 6]] },
@@ -72,5 +93,14 @@ window.COH = (() => {
   const link = (m) => `${location.origin}/${m.slug}#${m.token}`;
   const wa = (text, phone) => `https://wa.me/${phone || ''}?text=${encodeURIComponent(text)}`;
   const addMonth = (d) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString(); };
-  return { PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
+  // ---- 1:1 sessions: the member proposes a time by message, Alejandro confirms it in the CRM (m.session = { at, mode }) ----
+  const SESSION_MIN = 60;
+  const upcoming = (m) => (m.session && new Date(m.session.at) > Date.now() ? m.session : null);
+  const stamp = (d) => new Date(d).toISOString().replace(/[-:]|\.\d+/g, '');
+  const sessionTitle = (m) => `Sesión 1:1 con ${CFG.coach}${m.session && m.session.mode ? ' (' + m.session.mode.toLowerCase() + ')' : ''}`;
+  const icsBlob = (m) => { const s = m.session, end = new Date(new Date(s.at).getTime() + SESSION_MIN * 60000); const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Coheresencia//ES', 'BEGIN:VEVENT', `UID:${m.id}-${stamp(s.at)}@coheresencia`, `DTSTAMP:${stamp(Date.now())}`, `DTSTART:${stamp(s.at)}`, `DTEND:${stamp(end)}`, `SUMMARY:${sessionTitle(m)}`, 'DESCRIPTION:Tu sesión uno a uno de Coheresencia.', 'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Tu sesión empieza en una hora', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR']; return new Blob([L.join('\r\n')], { type: 'text/calendar' }); };
+  const gcal = (m) => `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(sessionTitle(m))}&dates=${stamp(m.session.at)}/${stamp(new Date(new Date(m.session.at).getTime() + SESSION_MIN * 60000))}`;
+  const countdown = (at) => { const ms = Math.max(0, new Date(at) - Date.now()), d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 36e5), mi = Math.floor(ms % 36e5 / 6e4); return { d, h, mi, ms }; };
+  const fmtDT = (d) => new Date(d).toLocaleString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  return { T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
 })();
