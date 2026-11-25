@@ -19,28 +19,31 @@ COH.ready.then(() => {
 
   const ring = (p, size) => { const R = size * .36, c = 2 * Math.PI * R, h = size / 2; return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${p}% completado"><circle cx="${h}" cy="${h}" r="${R}" fill="none" stroke="rgba(247,240,222,.12)" stroke-width="${size / 17}"/><circle cx="${h}" cy="${h}" r="${R}" fill="none" stroke="#e3bd72" stroke-width="${size / 17}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - p / 100)}" transform="rotate(-90 ${h} ${h})"/><text x="${h}" y="${h + size / 18}" text-anchor="middle" fill="#f7f0de" font-family="Fraunces,serif" font-size="${size / 5}" font-weight="300">${p}%</text></svg>`; };
   const minutes = () => C.LESSONS.filter((l) => m.done[l.id]).reduce((s, l) => s + l.min, 0);
-  const bars = () => Object.entries(C.TRACKS).map(([k, t]) => { const a = C.doneN(m, k), b = C.lessons(k).length || 1; return `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${t.name}</span><span class="mute">${a}/${b}</span></div><div class="bar" style="margin-top:6px"><i style="width:${(a / b) * 100}%"></i></div></div>`; }).join('');
+  const bars = () => Object.entries(C.TRACKS).filter(([k]) => C.has(m, k)).map(([k, t]) => { const a = C.doneN(m, k), b = C.lessons(k).length || 1; return `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${t.name}</span><span class="mute">${a}/${b}</span></div><div class="bar" style="margin-top:6px"><i style="width:${(a / b) * 100}%"></i></div></div>`; }).join('');
 
   // the confirmed 1:1 session, with a live countdown and the calendar buttons
   const cdHtml = (at) => { const c = C.countdown(at); return `<span><b>${c.d}</b>${c.d === 1 ? 'día' : 'días'}</span><span><b>${c.h}</b>horas</span><span><b>${c.mi}</b>min</span>`; };
-  const sessionCard = () => { const s = C.upcoming(m); if (!s) return ''; const url = URL.createObjectURL(C.icsBlob(m)); return `<section class="card sess"><p class="eyebrow">Tu sesión 1:1</p><h2>${esc(C.fmtDT(s.at))}</h2><p class="mute">${esc(s.mode)} · con ${C.CFG.coach} · ${C.SESSION_MIN} min</p><div class="count" data-at="${s.at}">${cdHtml(s.at)}</div><div class="acts"><a class="btn sm" download="sesion-1a1.ics" href="${url}">Añadir al calendario</a><a class="btn sm ghost" href="${C.gcal(m)}" target="_blank" rel="noopener">Google Calendar</a></div></section>`; };
+  const sessionCard = () => { const s = C.upcoming(m); if (!s) return ''; const url = URL.createObjectURL(C.icsBlob(m)); return `<section class="card sess"><p class="eyebrow">Tu sesión 1:1</p><h2>${esc(C.fmtDT(s.at))}</h2><p class="mute">${s.course && C.TRACKS[s.course] ? C.TRACKS[s.course].name + ' · ' : ''}${esc(s.mode)} · con ${C.CFG.coach} · ${C.SESSION_MIN} min</p><div class="count" data-at="${s.at}">${cdHtml(s.at)}</div><div class="acts"><a class="btn sm" download="sesion-1a1.ics" href="${url}">Añadir al calendario</a><a class="btn sm ghost" href="${C.gcal(m)}" target="_blank" rel="noopener">Google Calendar</a></div></section>`; };
   setInterval(() => document.querySelectorAll('.count').forEach((e) => { e.innerHTML = cdHtml(e.dataset.at); }), 30000);
 
+  const noCourse = (t) => `<section class="card"><p class="eyebrow">${C.TRACKS[t].name}</p><h2 style="font-size:28px;margin:8px 0">Este curso no está en tu plan</h2><p class="mute">${C.TRACKS[t].sub}. Se compra por separado: <b>${esc(C.T('precio.' + t))}</b>.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">${contact(`Hola ${C.CFG.coach}, soy ${first}. Quiero añadir el curso de ${C.TRACKS[t].name}.`)}</div></section>`;
   const views = {
     inicio() {
       const n = C.next(m), st = C.streak(m), p = C.progress(m), cu = C.lessons('cuerpo'), re = C.lessons('respiracion');
       const door = (tab, name, sub, extra) => `<button class="card door" data-tab="${tab}"><span class="eyebrow">${name}</span><b>${sub}</b><small class="mute">${extra}</small></button>`;
-      return `${sessionCard()}${n ? `<section class="card next" data-open="${n.id}" style="cursor:pointer"><div class="ph">${poster(n)}</div><div><p class="eyebrow">Tu siguiente paso</p><h2>${esc(n.title)}</h2><p class="mute">${n.min} min · Cuerpo ${n.n + 1} de ${cu.length}</p><button class="btn sm" style="margin-top:12px">Empezar</button></div></section>` : `<section class="card"><p class="eyebrow">Cuerpo</p><h2>Completaste el recorrido</h2><p class="mute">Repite la rutina completa cuando quieras o pasa a Respiración.</p></section>`}
+      return `${sessionCard()}${!C.has(m, 'cuerpo') ? '' : n ? `<section class="card next" data-open="${n.id}" style="cursor:pointer"><div class="ph">${poster(n)}</div><div><p class="eyebrow">Tu siguiente paso</p><h2>${esc(n.title)}</h2><p class="mute">${n.min} min · Cuerpo ${n.n + 1} de ${cu.length}</p><button class="btn sm" style="margin-top:12px">Empezar</button></div></section>` : `<section class="card"><p class="eyebrow">Cuerpo</p><h2>Completaste el recorrido</h2><p class="mute">Repite la rutina completa cuando quieras o pasa a Respiración.</p></section>`}
       <section class="card sum"><div class="sumring">${ring(p, 100)}</div><div class="stats"><div><b>${st}</b><small>días de racha</small></div><div><b>${minutes()}</b><small>minutos</small></div><div><b>${Object.keys(m.done).length}</b><small>lecciones</small></div></div></section>
       <section class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><p class="eyebrow">Esta semana</p><span class="mute">${st ? `Racha de ${st} ${st === 1 ? 'día' : 'días'}` : 'Empieza hoy tu racha'}</span></div><div class="week">${week()}</div></section>
-      <div class="doors">${door('cuerpo', 'Cuerpo', `${C.doneN(m, 'cuerpo')}/${cu.length}`, 'Entrenamiento')}${door('respiracion', 'Respirar', `${C.doneN(m, 'respiracion')}/${re.length}`, 'Respiración')}${door('uno', '1:1', 'Sesiones', 'con ' + C.CFG.coach)}</div>`;
+      <div class="doors">${door('cuerpo', 'Cuerpo', C.has(m, 'cuerpo') ? `${C.doneN(m, 'cuerpo')}/${cu.length}` : 'Añadir', 'Entrenamiento')}${door('respiracion', 'Respirar', C.has(m, 'respiracion') ? `${C.doneN(m, 'respiracion')}/${re.length}` : 'Añadir', 'Respiración')}${door('uno', '1:1', 'Sesiones', 'con ' + C.CFG.coach)}</div>`;
     },
     cuerpo() {
+      if (!C.has(m, 'cuerpo')) return noCourse('cuerpo');
       const cur = C.next(m);
       return `<div><p class="eyebrow">Cuerpo</p><h2 style="font-size:30px;margin-top:6px">${esc(C.T('cuerpo.titulo'))}</h2><p class="mute" style="margin-top:6px">${esc(C.T('cuerpo.texto'))}</p></div>
       <div class="path">${C.lessons('cuerpo').map((l) => { const ok = C.unlocked(m, l), dn = !!m.done[l.id], isCur = cur && cur.id === l.id; return `<article class="card row ${dn ? 'done' : ''} ${isCur ? 'cur' : ''} ${ok ? '' : 'lock'}" ${ok ? `data-open="${l.id}"` : `data-locked="1"`}><span class="dot">${dn ? '✓' : ''}</span>${isCur ? '<img class="star sidestar" src="/media/star.png" alt="" style="width:34px;height:34px">' : ''}<div class="ph">${poster(l)}</div><div><h3>${esc(l.title)}</h3><small>${ok ? `${l.min} min${l.circuit ? ' · circuito' : ''}` : 'Termina la anterior para abrirla'}</small></div><span class="go">${ok ? '›' : ''}</span></article>`; }).join('')}</div>`;
     },
     respiracion() {
+      if (!C.has(m, 'respiracion')) return noCourse('respiracion');
       return `<div><p class="eyebrow">Respiración</p><h2 style="font-size:30px;margin-top:6px">${esc(C.T('respiracion.titulo'))}</h2><p class="mute" style="margin-top:6px">${esc(C.T('respiracion.texto'))}</p></div>
       <section class="card breathe"><p class="eyebrow">Respirar con ritmo</p><div class="orb" aria-hidden="true"><img src="/media/star.png" alt=""></div><p class="mute" style="margin-top:6px">${esc(C.T('ritmo.texto'))}</p><div class="pchips" style="margin-top:14px">${Object.entries(C.PACES).map(([k, v]) => `<button class="pill" data-pacer="${k}" data-mins="3">${v.name}</button>`).join('')}</div></section>
       <div class="grid">${C.lessons('respiracion').map((l) => `<article class="card tile ${m.done[l.id] ? 'done' : ''}" data-open="${l.id}"><div class="ph">${poster(l)}</div><div class="t"><h3>${esc(l.title)}</h3><small>${l.min} min${l.level ? ' · ' + esc(l.level) : ''}${m.done[l.id] ? ' · hecha ✓' : ''}</small></div></article>`).join('')}</div>`;
@@ -48,7 +51,7 @@ COH.ready.then(() => {
     perfil() {
       const p = C.progress(m);
       return `<section class="card prof"><span class="avatar" aria-hidden="true">${esc(first[0] || '·')}</span><div><h2>${esc(m.name)}</h2><p class="mute">Miembro desde ${C.fmt(m.start)}</p></div></section>
-      <section class="card"><p class="eyebrow">Tu membresía</p><p style="margin-top:6px">Renueva el ${C.fmt(m.renew)} · ${C.daysLeft(m) > 0 ? `faltan ${C.daysLeft(m)} días` : 'toca renovar'}</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">${contact(`Hola ${C.CFG.coach}, soy ${first}. Te escribo por mi membresía.`)}</div></section>
+      <section class="card"><p class="eyebrow">Tu membresía</p><p style="margin-top:6px">Cursos: ${C.courses(m).map((k) => C.TRACKS[k].name).join(' y ')}</p><p style="margin-top:4px">Renueva el ${C.fmt(m.renew)} · ${C.daysLeft(m) > 0 ? `faltan ${C.daysLeft(m)} días` : 'toca renovar'}</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">${contact(`Hola ${C.CFG.coach}, soy ${first}. Te escribo por mi membresía.`)}</div></section>
       <section class="card" style="text-align:center"><p class="eyebrow">Tu progreso</p><div class="ring" style="margin:10px 0">${ring(p, 150)}</div><p class="mute">${Object.keys(m.done).length} de ${C.LESSONS.length} lecciones · ${minutes()} min · racha de ${C.streak(m)}</p></section>
       <section class="card"><p class="eyebrow">Por recorrido</p>${bars()}</section>`;
     },
@@ -57,14 +60,15 @@ COH.ready.then(() => {
       return `${sessionCard()}<section class="card"><p class="eyebrow">Trabajo interno</p><h2 style="font-size:30px;margin:8px 0 10px">${esc(C.T('uno.titulo'))}</h2><p class="mute">${esc(C.T('uno.texto'))}</p><p style="margin-top:10px"><b>${esc(C.T('precio.uno'))}</b> <span class="mute">· se paga aparte del curso</span></p></section>
       <section class="card"><p class="eyebrow">Pide tu hora</p><p class="mute" style="margin:6px 0 14px">${esc(C.T('uno.pasos'))}</p>
       <div class="two"><label>Día<input type="date" id="sd" min="${min}" value="${min}"></label><label>Hora<select id="st">${times.map((t) => `<option ${t === '18:00' ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
-      <div class="pchips" style="margin:12px 0"><button class="pill on" data-mode="Online">Online</button><button class="pill" data-mode="Presencial">Presencial</button></div>
+      <p class="eyebrow" style="margin-top:14px">Sobre qué curso</p><div class="pchips" style="margin:8px 0">${C.courses(m).map((k, i) => `<button class="pill ${i ? '' : 'on'}" data-course="${k}">${C.TRACKS[k].name}</button>`).join('')}</div>
+      <p class="eyebrow">Cómo</p><div class="pchips" style="margin:8px 0 12px"><button class="pill on" data-mode="Online">Online</button><button class="pill" data-mode="Presencial">Presencial</button></div>
       <p class="msgprev mute" id="smsg"></p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">${C.CFG.whatsapp ? '<button class="btn" data-send="wa">Enviar por WhatsApp</button>' : ''}<button class="btn ${C.CFG.whatsapp ? 'ghost' : ''}" data-send="ig">Enviar por Instagram</button></div></section>`;
     },
   };
 
-  let mode = 'Online';
-  const request = () => { const d = $('#sd').value, t = $('#st').value, day = new Date(`${d}T${t}`).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); return `Hola ${C.CFG.coach}, soy ${m.name}. Me gustaría reservar una sesión 1:1 (${mode.toLowerCase()}) el ${day} a las ${t}. ¿Te viene bien? Si no, dime qué otro día y hora te va mejor.`; };
+  let mode = 'Online', course = C.courses(m)[0];
+  const request = () => { const d = $('#sd').value, t = $('#st').value, day = new Date(`${d}T${t}`).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); return `Hola ${C.CFG.coach}, soy ${m.name}. Me gustaría reservar una sesión 1:1 de ${C.TRACKS[course].name} (${mode.toLowerCase()}) el ${day} a las ${t}. ¿Te viene bien? Si no, dime qué otro día y hora te va mejor.`; };
   const preview = () => { const e = $('#smsg'); if (e) e.textContent = '«' + request() + '»'; };
 
   function render() {
@@ -106,7 +110,7 @@ COH.ready.then(() => {
   }
 
   document.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-tab],[data-open],[data-locked],[data-close],[data-play],[data-done],[data-pacer],[data-vid],[data-circ],[data-rd],[data-saver],[data-mode],[data-send]'); if (!t) return;
+    const t = e.target.closest('[data-tab],[data-open],[data-locked],[data-close],[data-play],[data-done],[data-pacer],[data-vid],[data-circ],[data-rd],[data-saver],[data-mode],[data-course],[data-send]'); if (!t) return;
     if (t.dataset.tab) return go(t.dataset.tab);
     if (t.dataset.open) return openLesson(t.dataset.open);
     if (t.dataset.locked) return toast('Termina la lección anterior para abrir esta');
@@ -120,6 +124,7 @@ COH.ready.then(() => {
       const id = t.dataset.saver, n = +$('#rn', sheet).textContent; (m.rounds ||= {})[id] = [...(m.rounds[id] || []), { at: new Date().toISOString(), n }];
       if (!m.done[id]) m.done[id] = new Date().toISOString(); save(); closeSheet(); render(); return toast(`${n} ${n === 1 ? 'ronda guardada' : 'rondas guardadas'}. ¡Buen trabajo!`);
     }
+    if (t.dataset.course) { course = t.dataset.course; document.querySelectorAll('[data-course]').forEach((b) => b.classList.toggle('on', b === t)); return preview(); }
     if (t.dataset.mode) { mode = t.dataset.mode; document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('on', b === t)); return preview(); }
     if (t.dataset.send) {
       const text = request();

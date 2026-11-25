@@ -38,8 +38,9 @@ window.COH = (() => {
     'uno.titulo': ['1:1 · título', 'Sesiones uno a uno'],
     'uno.texto': ['1:1 · descripción', 'Respiración activa y acompañamiento profundo con Alejandro, online o presencial. Se reservan aparte del curso.'],
     'uno.pasos': ['1:1 · cómo se reserva', 'Elige el día y la hora que mejor te vengan y envíale el mensaje. Alejandro te lo confirma o te propone otra hora, y verás tu cita aquí con la cuenta atrás.'],
-    'precio.curso': ['Precio del curso (Cuerpo + Respiración)', 'Precio por confirmar'],
-    'precio.uno': ['Precio de la sesión 1:1', 'Precio por confirmar'],
+    'precio.cuerpo': ['Precio del curso Cuerpo', 'Precio por confirmar'],
+    'precio.respiracion': ['Precio del curso Respiración', 'Precio por confirmar'],
+    'precio.uno': ['Precio de una sesión 1:1 (de cualquiera de los dos cursos)', 'Precio por confirmar'],
   };
   let OVERRIDE = {};
   const T = (k) => (OVERRIDE[k] ?? TEXTS[k][1]);
@@ -68,7 +69,7 @@ window.COH = (() => {
   const seed = () => ({ members: [
     { id: 'm0', name: 'Usuario Demo', slug: 'user', token: 'demo-user-7c3e9a21', phone: '', ig: 'usuario.demo', source: 'Instagram', start: ago(40), renew: iso(Date.now() + 2 * DAY), active: true, notes: 'Viene de un reel. Prefiere entrenar por la mañana.', done: { c1: ago(3), c2: ago(2), c3: ago(1), r1: ago(2), r3: ago(1) } },
     { id: 'm1', name: 'Laura Gómez', slug: 'laura', token: 'demo-laura-4f9c1a7e', phone: '', ig: 'laura.demo', source: 'Instagram', start: ago(40), renew: iso(Date.now() + 2 * DAY), active: true, notes: 'Viene de un reel. Prefiere entrenar por la mañana.', done: { c1: ago(3), c2: ago(2), c3: ago(1), r1: ago(2), r3: ago(1) } },
-    { id: 'm2', name: 'Marcos Ruiz', slug: 'marcos', token: 'demo-marcos-81b2d6c3', phone: '', ig: '', source: 'WhatsApp', start: ago(12), renew: iso(Date.now() + 19 * DAY), active: true, notes: '', done: { c1: ago(9), r1: ago(8) } },
+    { id: 'm2', name: 'Marcos Ruiz', slug: 'marcos', courses: ['cuerpo'], token: 'demo-marcos-81b2d6c3', phone: '', ig: '', source: 'WhatsApp', start: ago(12), renew: iso(Date.now() + 19 * DAY), active: true, notes: '', done: { c1: ago(9), r1: ago(8) } },
     { id: 'm3', name: 'Sofía Navarro', slug: 'sofia', token: 'demo-sofia-2e70aa95', phone: '', ig: 'sofia.demo', source: 'Instagram', start: ago(75), renew: ago(4), active: true, notes: 'Pendiente de renovar. Le interesa el trabajo interno 1:1.', done: { c1: ago(60), c2: ago(55), c3: ago(50), c4: ago(40), c5: ago(30), r1: ago(60), r2: ago(40), r3: ago(35), r4: ago(20) } },
   ] });
   const load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.members) return s; } catch {} const s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); return s; };
@@ -81,7 +82,10 @@ window.COH = (() => {
   // Cuerpo is a path: the next lesson opens once the one before is done. Respiración is always open.
   const unlocked = (m, l) => !TRACKS[l.track].seq || l.n === 0 || !!m.done[lessons(l.track)[l.n - 1].id];
   const next = (m) => lessons('cuerpo').find((l) => !m.done[l.id]) || null;
-  const progress = (m) => Math.round((Object.keys(m.done).length / LESSONS.length) * 100);
+  // Cuerpo and Respiración are two separate courses. A member has one or both (m.courses; older members have both).
+  const courses = (m) => (m.courses && m.courses.length ? m.courses : Object.keys(TRACKS));
+  const has = (m, t) => courses(m).includes(t);
+  const progress = (m) => { const ls = LESSONS.filter((l) => has(m, l.track)); return ls.length ? Math.round((ls.filter((l) => m.done[l.id]).length / ls.length) * 100) : 0; };
   const dayKey = (d) => new Date(d).toLocaleDateString('sv');
   const activeDays = (m) => new Set(Object.values(m.done).map(dayKey));
   const streak = (m) => { const a = activeDays(m); let n = 0, d = new Date(); if (!a.has(dayKey(d))) d = new Date(Date.now() - DAY); while (a.has(dayKey(d))) { n++; d = new Date(+d - DAY); } return n; };
@@ -97,10 +101,10 @@ window.COH = (() => {
   const SESSION_MIN = 60;
   const upcoming = (m) => (m.session && new Date(m.session.at) > Date.now() ? m.session : null);
   const stamp = (d) => new Date(d).toISOString().replace(/[-:]|\.\d+/g, '');
-  const sessionTitle = (m) => `Sesión 1:1 con ${CFG.coach}${m.session && m.session.mode ? ' (' + m.session.mode.toLowerCase() + ')' : ''}`;
+  const sessionTitle = (m) => `Sesión 1:1${m.session && m.session.course && TRACKS[m.session.course] ? ' de ' + TRACKS[m.session.course].name : ''} con ${CFG.coach}${m.session && m.session.mode ? ' (' + m.session.mode.toLowerCase() + ')' : ''}`;
   const icsBlob = (m) => { const s = m.session, end = new Date(new Date(s.at).getTime() + SESSION_MIN * 60000); const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Coheresencia//ES', 'BEGIN:VEVENT', `UID:${m.id}-${stamp(s.at)}@coheresencia`, `DTSTAMP:${stamp(Date.now())}`, `DTSTART:${stamp(s.at)}`, `DTEND:${stamp(end)}`, `SUMMARY:${sessionTitle(m)}`, 'DESCRIPTION:Tu sesión uno a uno de Coheresencia.', 'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Tu sesión empieza en una hora', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR']; return new Blob([L.join('\r\n')], { type: 'text/calendar' }); };
   const gcal = (m) => `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(sessionTitle(m))}&dates=${stamp(m.session.at)}/${stamp(new Date(new Date(m.session.at).getTime() + SESSION_MIN * 60000))}`;
   const countdown = (at) => { const ms = Math.max(0, new Date(at) - Date.now()), d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 36e5), mi = Math.floor(ms % 36e5 / 6e4); return { d, h, mi, ms }; };
   const fmtDT = (d) => new Date(d).toLocaleString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-  return { T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
+  return { courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
 })();

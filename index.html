@@ -67,7 +67,7 @@ nav .btn{color:var(--ink);padding:9px 18px}
 #brand a{pointer-events:auto;display:block}
 .scrolled #brand a{cursor:pointer}
 .breath{animation:breathe 6s ease-in-out infinite alternate;filter:drop-shadow(0 4px 22px rgba(30,14,48,.55)) drop-shadow(0 0 40px rgba(255,190,120,.25))}
-.breath img{width:100%;height:auto}
+.breath img{width:100%;height:auto;filter:brightness(1.3)}
 @keyframes breathe{from{transform:scale(.97)}to{transform:scale(1.025)}}
 .hero-copy{position:fixed;left:0;right:0;bottom:max(3vh,env(safe-area-inset-bottom));z-index:20;text-align:center;padding:0 24px;opacity:var(--hero,1);pointer-events:none}
 .hero-copy h1{font:300 clamp(22px,3vw,38px)/1.25 var(--serif);letter-spacing:.02em;text-shadow:0 2px 24px rgba(30,14,48,.5)}
@@ -135,7 +135,7 @@ dialog button{background:none;border:0;color:var(--cream);font-size:22px;cursor:
 .bio li b{font:400 20px var(--serif);display:block;color:var(--gold);font-weight:400}
 
 footer{padding:90px 24px 56px;text-align:center;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
-footer img{width:min(230px,62vw);height:auto;margin:0 auto 22px}
+footer img{width:min(260px,66vw);height:auto;margin:0 auto 22px;filter:brightness(1.4) contrast(1.1)}
 footer .tag{font:300 italic 24px var(--serif);color:var(--cream);margin-bottom:22px}
 footer a{margin:0 10px}
 footer .demo{margin-top:34px;font-size:12px;opacity:.6}footer .demo a{margin:0;text-decoration:underline;text-underline-offset:3px}
@@ -246,11 +246,11 @@ footer .demo{margin-top:34px;font-size:12px;opacity:.6}footer .demo a{margin:0;t
 <section id="acceso">
   <div class="wrap">
     <p class="eyebrow rv">Acceso</p>
-    <h2 class="rv">Una suscripción. <em>Tu práctica diaria.</em></h2>
-    <p class="lede rv">Un solo precio para los dos cursos, Cuerpo y Respiración. Las sesiones personales de Trabajo interno se reservan aparte con el coach.</p>
+    <h2 class="rv">Dos cursos. <em>Tu práctica diaria.</em></h2>
+    <p class="lede rv">Dos cursos independientes, Cuerpo y Respiración: elige uno o los dos. Cada uno tiene su precio y se puede acompañar de sesiones uno a uno, que se reservan aparte.</p>
     <div class="plans">
-      <article class="plan main rv"><span class="tag">El curso · Movimiento 360</span><h3>Cuerpo + Respiración</h3><ul><li>Los dos cursos con un solo precio</li><li>Vídeos de entrenamiento consciente y respiración funcional</li><li>Circuitos con temporizador y ritmo de respiración guiado</li><li>A tu ritmo, desde cualquier lugar</li></ul><p class="mute"><!-- TEMPLATE: precio por confirmar con Alejandro -->Precio por confirmar</p><a class="btn" href="https://ig.me/m/alehandromena" target="_blank" rel="noopener">Quiero el curso</a></article>
-      <article class="plan rv"><span class="tag">Se reserva aparte</span><h3>Sesión uno a uno</h3><ul><li>Respiración activa y acompañamiento profundo</li><li>Online o presencial, con Alejandro</li><li>Eliges día y hora, él te lo confirma</li></ul><p class="mute"><!-- TEMPLATE: precio por confirmar con Alejandro -->Precio por confirmar</p><a class="btn ghost" href="https://ig.me/m/alehandromena" target="_blank" rel="noopener">Reservar sesión</a></article>
+      <article class="plan main rv"><span class="tag">Curso</span><h3>Cuerpo</h3><ul><li>Entrenamiento consciente: fuerza, movilidad, potencia y psicomotricidad</li><li>Vídeos que se desbloquean a tu ritmo</li><li>Circuitos con temporizador y registro de rondas</li></ul><p class="mute"><!-- TEMPLATE: precio por confirmar con Alejandro -->Precio por confirmar</p><p class="mute" style="font-size:14px">Opcional: sesiones uno a uno de Cuerpo con Alejandro, online o presencial, que se reservan aparte.</p><a class="btn " href="https://ig.me/m/alehandromena" target="_blank" rel="noopener">Quiero el curso Cuerpo</a></article>
+      <article class="plan  rv"><span class="tag">Curso</span><h3>Respiración</h3><ul><li>Respiración funcional para regular el sistema nervioso</li><li>Acceso libre, sin orden, según cómo te sientas</li><li>Ritmo de respiración guiado en pantalla</li></ul><p class="mute"><!-- TEMPLATE: precio por confirmar con Alejandro -->Precio por confirmar</p><p class="mute" style="font-size:14px">Opcional: sesiones uno a uno de Respiración con Alejandro, online o presencial, que se reservan aparte.</p><a class="btn ghost" href="https://ig.me/m/alehandromena" target="_blank" rel="noopener">Quiero el curso Respiración</a></article>
     </div>
     <div class="values rv"><span>Ama</span><span>Agradece</span><span>Elige</span><span>Decide</span></div>
   </div>
@@ -387,7 +387,7 @@ footer .demo{margin-top:34px;font-size:12px;opacity:.6}footer .demo a{margin:0;t
     stops(cards, (i) => ['Cuerpo', 'Respiración', 'Interior'][i], (g, i) => ({ x: g.x + g.w - 34, d: d * .9, card: i }));
     stops(bioLis, (i) => ['Breathwork', 'Movimiento', 'Osteopatía'][i], (g, i) => ({ x: g.x - 22, d: d * 1.1, bio: i }));
     stops(reelEls, (i) => 'Reel ' + (i + 1), (g, i) => ({ x: g.x + g.w - 32, d: d * 1.05, reel: i }));
-    stops(plans, (i) => ['Curso', '1 a 1'][i], (g, i) => ({ x: g.x + g.w - 34, d: d * .9, plan: i }));
+    stops(plans, (i) => ['Cuerpo', 'Respiración'][i], (g, i) => ({ x: g.x + g.w - 34, d: d * .9, plan: i }));
     const fl = dr(footLogo), fy = fl.y + FY * fl.h;
     push({ s: fy - vh * .45, x: fl.x + FX * fl.w, y: fy, d: fl.w * SF, label: 'Footer' });
     for (let i = W.length - 1; i > 0; i--) { W[i].s = Math.min(W[i].s, maxS); W[i - 1].s = Math.min(W[i - 1].s, W[i].s - 50); }
