@@ -6,12 +6,7 @@
   "min": 1,
   "text": "Reconecta pies y tobillos antes de cualquier otra cosa. Una esterilla y una pelota de tenis.",
   "poster": "/media/videos/c1-b5d53c2cdd.jpg",
-  "videos": [
-   {
-    "src": "/media/videos/c1-b5d53c2cdd.mp4",
-    "min": 1
-   }
-  ]
+  "videos": []
  },
  {
   "id": "c2",
