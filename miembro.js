@@ -27,6 +27,8 @@ COH.ready.then(() => {
   setInterval(() => document.querySelectorAll('.count').forEach((e) => { e.innerHTML = cdHtml(e.dataset.at); }), 30000);
 
   const noCourse = (t) => `<section class="card"><p class="eyebrow">${C.TRACKS[t].name}</p><h2 style="font-size:28px;margin:8px 0">Este curso no está en tu plan</h2><p class="mute">${C.TRACKS[t].sub}. Se compra por separado: <b>${esc(C.T('precio.' + t))}</b>.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">${contact(`Hola ${C.CFG.coach}, soy ${first}. Quiero añadir el curso de ${C.TRACKS[t].name}.`)}</div></section>`;
+  const rd = (id) => (m.rounds && m.rounds[id]) || [];
+  const roundStats = () => { const all = Object.values(m.rounds || {}).flat(); return { total: all.reduce((s, x) => s + x.n, 0), best: Math.max(0, ...all.map((x) => x.n)), sessions: all.length }; };
   const views = {
     inicio() {
       const n = C.next(m), st = C.streak(m), p = C.progress(m), cu = C.lessons('cuerpo'), re = C.lessons('respiracion');
@@ -38,9 +40,10 @@ COH.ready.then(() => {
     },
     cuerpo() {
       if (!C.has(m, 'cuerpo')) return noCourse('cuerpo');
-      const cur = C.next(m);
+      const cur = C.next(m), rs = roundStats();
       return `<div><p class="eyebrow">Cuerpo</p><h2 style="font-size:30px;margin-top:6px">${esc(C.T('cuerpo.titulo'))}</h2><p class="mute" style="margin-top:6px">${esc(C.T('cuerpo.texto'))}</p></div>
-      <div class="path">${C.lessons('cuerpo').map((l) => { const ok = C.unlocked(m, l), dn = !!m.done[l.id], isCur = cur && cur.id === l.id; return `<article class="card row ${dn ? 'done' : ''} ${isCur ? 'cur' : ''} ${ok ? '' : 'lock'}" ${ok ? `data-open="${l.id}"` : `data-locked="1"`}><span class="dot">${dn ? '✓' : ''}</span>${isCur ? '<img class="star sidestar" src="/media/star.png" alt="" style="width:34px;height:34px">' : ''}<div class="ph">${poster(l)}</div><div><h3>${esc(l.title)}</h3><small>${ok ? `${l.min} min${l.circuit ? ' · circuito' : ''}` : 'Termina la anterior para abrirla'}</small></div><span class="go">${ok ? '›' : ''}</span></article>`; }).join('')}</div>`;
+      <section class="card stats"><div><b>${rs.total}</b><small>rondas en total</small></div><div><b>${rs.best}</b><small>mejor circuito</small></div><div><b>${rs.sessions}</b><small>circuitos hechos</small></div></section>
+      <div class="path">${C.lessons('cuerpo').map((l) => { const ok = C.unlocked(m, l), dn = !!m.done[l.id], isCur = cur && cur.id === l.id; return `<article class="card row ${dn ? 'done' : ''} ${isCur ? 'cur' : ''} ${ok ? '' : 'lock'}" ${ok ? `data-open="${l.id}"` : `data-locked="1"`}><span class="dot">${dn ? '✓' : ''}</span>${isCur ? '<img class="star sidestar" src="/media/star.png" alt="" style="width:34px;height:34px">' : ''}<div class="ph">${poster(l)}</div><div><h3>${esc(l.title)}</h3><small>${ok ? `${l.min} min${C.circuit(l) ? ' · circuito de ' + C.circuit(l) + ' min' : ''}${rd(l.id).length ? ' · <b style="color:var(--gold)">' + rd(l.id).slice(-1)[0].n + ' rondas</b>' : ''}` : 'Termina la anterior para abrirla'}</small></div><span class="go">${ok ? '›' : ''}</span></article>`; }).join('')}</div>`;
     },
     respiracion() {
       if (!C.has(m, 'respiracion')) return noCourse('respiracion');
@@ -91,16 +94,17 @@ COH.ready.then(() => {
     sheet.innerHTML = `<div class="player">${vs.length ? `<video src="${esc(vs[0].src)}" poster="${esc(l.poster)}" controls playsinline preload="metadata" controlslist="nodownload"></video>` : `${poster(l)}<button class="play" aria-label="Reproducir" data-play></button><span class="tag">Vídeo próximamente</span>`}<button class="close" data-close>‹ Volver</button></div>
     <div class="body">${vs.length > 1 ? `<div class="pchips">${vs.map((v, i) => `<button class="pill ${i ? '' : 'on'}" data-vid="${i}">Vídeo ${i + 1}</button>`).join('')}</div>` : ''}
     <p class="eyebrow">${C.TRACKS[l.track].name}${l.track === 'cuerpo' ? ` · ${l.n + 1} de ${C.lessons('cuerpo').length}` : ''} · ${l.min} min${l.level ? ' · ' + esc(l.level) : ''}</p><h2>${esc(l.title)}</h2><p class="mute">${esc(l.text)}</p>
-    ${l.circuit ? `<section class="card circ"><p class="eyebrow">Circuito · ${l.circuit} min</p><p class="mute" style="margin:6px 0">${esc(C.T('circuito.texto'))}</p><div class="clock" id="clk">${mmss(l.circuit * 60)}</div><div class="acts" style="justify-content:center"><button class="btn" id="cgo" data-circ="start">Empezar circuito</button><button class="btn ghost" data-circ="reset">Reiniciar</button></div>
+    ${C.circuit(l) ? `<section class="card circ"><p class="eyebrow">Circuito · ${C.circuit(l)} min</p><p class="mute" style="margin:6px 0">${esc(C.T('circuito.texto'))}</p><div class="clock" id="clk">${mmss(C.circuit(l) * 60)}</div><div class="acts" style="justify-content:center"><button class="btn" id="cgo" data-circ="start">Empezar circuito</button><button class="btn ghost" data-circ="reset">Reiniciar</button></div>
       <div class="rounds" id="rnd" hidden><p>¿Cuántas rondas hiciste?</p><div class="stepper"><button data-rd="-1" aria-label="Menos">−</button><b id="rn">1</b><button data-rd="1" aria-label="Más">+</button></div><button class="btn" data-saver="${id}">Guardar rondas</button></div><p class="mute" style="margin-top:10px;text-align:center">${roundsHist(id) ? 'Tus rondas: ' + roundsHist(id) : ''}</p></section>` : ''}
-    ${l.pace && C.PACES[l.pace] ? `<button class="btn ghost" data-pacer="${l.pace}" data-mins="${Math.max(1, Math.min(10, l.min))}">Respirar con ritmo · ${C.PACES[l.pace].name}</button>` : ''}
+    ${l.track === 'respiracion' ? `<section class="card circ"><p class="eyebrow">Temporizador de respiración</p><p class="mute" style="margin:6px 0 12px">Elige el ritmo y el tiempo, y respira con el aro mientras haces el ejercicio del vídeo.</p><div class="pchips" style="justify-content:center">${Object.entries(C.PACES).map(([k, v]) => `<button class="pill ${k === (l.pace || 'coherente') ? 'on' : ''}" data-bp="${k}">${v.name}</button>`).join('')}</div><div class="pchips" style="justify-content:center;margin:10px 0 16px">${[3, 5, 10, 15].map((n) => `<button class="pill ${n === ([3, 5, 10, 15].find((x) => x >= l.min) || 15) ? 'on' : ''}" data-bm="${n}">${n} min</button>`).join('')}</div><button class="btn" data-bgo>Empezar a respirar</button></section>` : ''}
+    ${l.track !== 'respiracion' && l.pace && C.PACES[l.pace] ? `<button class="btn ghost" data-pacer="${l.pace}" data-mins="${Math.max(1, Math.min(10, l.min))}">Respirar con ritmo · ${C.PACES[l.pace].name}</button>` : ''}
     <button class="btn" data-done="${id}" ${dn ? 'style="background:transparent;color:var(--gold)"' : ''}>${dn ? '✓ Hecha · toca para deshacer' : 'Marcar como hecha'}</button></div>`;
     sheet.dataset.id = id; sheet.classList.add('on'); document.body.style.overflow = 'hidden';
   }
   const closeSheet = () => { stopCirc(); sheet.querySelector('video')?.pause(); sheet.classList.remove('on'); document.body.style.overflow = ''; };
 
   function circuit(a) {
-    const l = C.LESSONS.find((x) => x.id === sheet.dataset.id), clk = $('#clk', sheet), go = $('#cgo', sheet), tot = l.circuit * 60;
+    const l = C.LESSONS.find((x) => x.id === sheet.dataset.id), clk = $('#clk', sheet), go = $('#cgo', sheet), tot = C.circuit(l) * 60;
     if (a === 'reset') { stopCirc(); clk.textContent = mmss(tot); go.textContent = 'Empezar circuito'; $('#rnd', sheet).hidden = true; return; }
     if (circ && circ.end) { const left = Math.ceil((circ.end - Date.now()) / 1000); stopCirc(); circ = { paused: left }; go.textContent = 'Seguir'; return; } // pause
     const resume = circ && circ.paused != null, left = resume ? circ.paused : tot; if (!resume) $('#rnd', sheet).hidden = true;
@@ -110,7 +114,7 @@ COH.ready.then(() => {
   }
 
   document.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-tab],[data-open],[data-locked],[data-close],[data-play],[data-done],[data-pacer],[data-vid],[data-circ],[data-rd],[data-saver],[data-mode],[data-course],[data-send]'); if (!t) return;
+    const t = e.target.closest('[data-tab],[data-open],[data-locked],[data-close],[data-play],[data-done],[data-pacer],[data-vid],[data-circ],[data-rd],[data-saver],[data-mode],[data-course],[data-send],[data-bp],[data-bm],[data-bgo]'); if (!t) return;
     if (t.dataset.tab) return go(t.dataset.tab);
     if (t.dataset.open) return openLesson(t.dataset.open);
     if (t.dataset.locked) return toast('Termina la lección anterior para abrir esta');
@@ -124,6 +128,8 @@ COH.ready.then(() => {
       const id = t.dataset.saver, n = +$('#rn', sheet).textContent; (m.rounds ||= {})[id] = [...(m.rounds[id] || []), { at: new Date().toISOString(), n }];
       if (!m.done[id]) m.done[id] = new Date().toISOString(); save(); closeSheet(); render(); return toast(`${n} ${n === 1 ? 'ronda guardada' : 'rondas guardadas'}. ¡Buen trabajo!`);
     }
+    if (t.dataset.bp || t.dataset.bm) { t.parentElement.querySelectorAll('.pill').forEach((b) => b.classList.toggle('on', b === t)); return; }
+    if (t.dataset.bgo !== undefined) return COH.pacer.open(sheet.querySelector('[data-bp].on').dataset.bp, +sheet.querySelector('[data-bm].on').dataset.bm);
     if (t.dataset.course) { course = t.dataset.course; document.querySelectorAll('[data-course]').forEach((b) => b.classList.toggle('on', b === t)); return preview(); }
     if (t.dataset.mode) { mode = t.dataset.mode; document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('on', b === t)); return preview(); }
     if (t.dataset.send) {

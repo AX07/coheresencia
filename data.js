@@ -77,6 +77,8 @@ window.COH = (() => {
   const reset = () => { localStorage.removeItem(KEY); return load(); };
   const find = (slug) => load().members.find((m) => m.slug === slug);
 
+  // Every Cuerpo lesson comes with a 15 minute circuit timer; the CRM can change the minutes or set 0 for none.
+  const circuit = (l) => (l.track === 'cuerpo' ? (l.circuit ?? 15) : 0);
   const lessons = (track) => LESSONS.filter((l) => l.track === track);
   const doneN = (m, track) => lessons(track).filter((l) => m.done[l.id]).length;
   // Cuerpo is a path: the next lesson opens once the one before is done. Respiración is always open.
@@ -106,5 +108,5 @@ window.COH = (() => {
   const gcal = (m) => `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(sessionTitle(m))}&dates=${stamp(m.session.at)}/${stamp(new Date(new Date(m.session.at).getTime() + SESSION_MIN * 60000))}`;
   const countdown = (at) => { const ms = Math.max(0, new Date(at) - Date.now()), d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 36e5), mi = Math.floor(ms % 36e5 / 6e4); return { d, h, mi, ms }; };
   const fmtDT = (d) => new Date(d).toLocaleString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-  return { courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
+  return { circuit, courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
 })();

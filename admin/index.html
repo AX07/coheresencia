@@ -29,7 +29,7 @@
 .mrow:hover{border-color:rgba(227,189,114,.6)}
 .mrow b{font-weight:500}.mrow small{color:var(--mute);display:block}
 .empty{text-align:center;padding:40px;color:var(--mute)}
-dialog{background:var(--ink2);color:var(--cream);border:1px solid var(--line);border-radius:22px;padding:0;width:min(560px,94vw);max-height:92svh}
+dialog{margin:auto;overflow:auto;background:var(--ink2);color:var(--cream);border:1px solid var(--line);border-radius:22px;padding:0;width:min(560px,94vw);max-height:92svh}
 dialog::backdrop{background:rgba(5,8,20,.8);backdrop-filter:blur(6px)}
 .dlg{padding:24px;display:grid;gap:14px}
 .dlg h2{font-size:28px}
@@ -45,6 +45,7 @@ textarea{min-height:90px;resize:vertical}
 .les .ic{padding:6px 10px}
 .upbar{min-width:150px}.upbar small{font-size:12px}
 .gh{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:6px}.gh.ok{border-color:rgba(159,201,138,.4)}
+@media(max-width:600px){dialog{width:calc(100vw - 20px);max-height:calc(100svh - 24px);border-radius:20px}.dlg{padding:18px}.dlg h2{font-size:24px}}
 @media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.mrow{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.les{flex-wrap:wrap}.les>div:nth-of-type(1){flex-basis:calc(100% - 60px)}}
 </style>
 </head>
