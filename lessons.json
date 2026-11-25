@@ -1,0 +1,151 @@
+[
+ {
+  "id": "c1",
+  "track": "cuerpo",
+  "title": "Pies y tobillos: despierta la base",
+  "min": 1,
+  "text": "Reconecta pies y tobillos antes de cualquier otra cosa. Una esterilla y una pelota de tenis.",
+  "poster": "/media/videos/c1-b5d53c2cdd.jpg",
+  "videos": [
+   {
+    "src": "/media/videos/c1-b5d53c2cdd.mp4",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "c2",
+  "track": "cuerpo",
+  "title": "Muñecas y manos",
+  "min": 8,
+  "text": "Movilidad y fuerza para muñecas y manos, la parte que más olvidamos.",
+  "poster": "/media/ig-Dd4A6otIHMg.jpg",
+  "videos": []
+ },
+ {
+  "id": "c3",
+  "track": "cuerpo",
+  "title": "Columna: ondas y movilidad",
+  "min": 12,
+  "text": "Mueve la columna en todas sus direcciones, sin prisa y sin dolor.",
+  "poster": "/media/ig-DdorV83I_Pq.jpg",
+  "videos": []
+ },
+ {
+  "id": "c4",
+  "track": "cuerpo",
+  "title": "Caderas abiertas",
+  "min": 12,
+  "text": "Libera caderas y pelvis con movimientos lentos y conscientes.",
+  "poster": "/media/ig-DeNN-wsownb.jpg",
+  "videos": []
+ },
+ {
+  "id": "c5",
+  "track": "cuerpo",
+  "title": "Fuerza: empujar",
+  "min": 15,
+  "text": "Patrones de empuje con tu propio peso.",
+  "poster": "/media/ig-Df5NQCkRSzo.jpg",
+  "videos": []
+ },
+ {
+  "id": "c6",
+  "track": "cuerpo",
+  "title": "Fuerza: tirar",
+  "min": 15,
+  "text": "Patrones de tracción y control de los hombros.",
+  "poster": "/media/ig-Df0EKeyofXe.jpg",
+  "videos": []
+ },
+ {
+  "id": "c7",
+  "track": "cuerpo",
+  "title": "Potencia: saltos suaves",
+  "min": 12,
+  "text": "Potencia sin impacto innecesario.",
+  "poster": "/media/ig-Df-aRRmxvif.jpg",
+  "videos": []
+ },
+ {
+  "id": "c8",
+  "track": "cuerpo",
+  "title": "Psicomotricidad: coordinación",
+  "min": 14,
+  "text": "Coordinación y ritmo para que el cuerpo se sienta tuyo.",
+  "poster": "/media/ig-Dfu8ma-oi-x.jpg",
+  "videos": []
+ },
+ {
+  "id": "c9",
+  "track": "cuerpo",
+  "title": "Equilibrio y pelota de tenis",
+  "min": 10,
+  "text": "Equilibrio, apoyo y auto-masaje con la pelota.",
+  "poster": "/media/ig-Dd4A6otIHMg.jpg",
+  "videos": []
+ },
+ {
+  "id": "c10",
+  "track": "cuerpo",
+  "title": "Tu rutina completa",
+  "min": 20,
+  "text": "Junta todo lo aprendido en una sola práctica.",
+  "poster": "/media/ig-DdorV83I_Pq.jpg",
+  "videos": []
+ },
+ {
+  "id": "r1",
+  "track": "respiracion",
+  "title": "Respiración nasal básica",
+  "min": 6,
+  "text": "Respirar por la nariz para regular el sistema nervioso.",
+  "poster": "/media/ig-Dfu8ma-oi-x.jpg",
+  "videos": []
+ },
+ {
+  "id": "r2",
+  "track": "respiracion",
+  "title": "Exhalación larga",
+  "min": 5,
+  "text": "Alarga la exhalación para bajar revoluciones.",
+  "poster": "/media/ig-Dd4A6otIHMg.jpg",
+  "videos": []
+ },
+ {
+  "id": "r3",
+  "track": "respiracion",
+  "title": "Respiración coherente",
+  "min": 10,
+  "text": "Un ritmo constante para encontrar calma y claridad.",
+  "poster": "/media/ig-DdorV83I_Pq.jpg",
+  "videos": []
+ },
+ {
+  "id": "r4",
+  "track": "respiracion",
+  "title": "Para activar la mañana",
+  "min": 7,
+  "text": "Energía suave al empezar el día.",
+  "poster": "/media/ig-DeNN-wsownb.jpg",
+  "videos": []
+ },
+ {
+  "id": "r5",
+  "track": "respiracion",
+  "title": "Para dormir mejor",
+  "min": 9,
+  "text": "Cierra el día respirando.",
+  "poster": "/media/ig-Df5NQCkRSzo.jpg",
+  "videos": []
+ },
+ {
+  "id": "r6",
+  "track": "respiracion",
+  "title": "Pausa de un minuto",
+  "min": 1,
+  "text": "Un minuto, donde estés.",
+  "poster": "/media/ig-Df0EKeyofXe.jpg",
+  "videos": []
+ }
+]
