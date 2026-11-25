@@ -1,8 +1,8 @@
 /* Preview data and helpers shared by /admin and /<name>. Everything is saved in this browser only (localStorage):
    the real version moves it to a database. Lessons are SAMPLE content until Alejandro sends his videos. */
 window.COH = (() => {
-  // TEMPLATE: Alejandro's WhatsApp number with country code and no +, e.g. '34600111222'. Empty hides the WhatsApp buttons.
-  const CFG = { coach: 'Alejandro', whatsapp: '', instagram: 'alehandromena', graceDays: 0 };
+  // Alejandro's WhatsApp number with country code and no +. Empty hides the WhatsApp buttons.
+  const CFG = { coach: 'Alejandro', whatsapp: '34674821290', instagram: 'alehandromena', graceDays: 0 };
   const DAY = 864e5, KEY = 'coh-preview-v1';
   const POSTERS = ['Dfu8ma-oi-x', 'Dd4A6otIHMg', 'DdorV83I_Pq', 'DeNN-wsownb', 'Df5NQCkRSzo', 'Df0EKeyofXe', 'Df-aRRmxvif'].map((id) => `/media/ig-${id}.jpg`);
   const L = (id, track, n, title, min, text) => ({ id, track, n, title, min, text, poster: POSTERS[n % POSTERS.length] });
