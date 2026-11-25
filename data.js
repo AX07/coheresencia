@@ -3,7 +3,7 @@
 window.COH = (() => {
   // Alejandro's WhatsApp number with country code and no +. Empty hides the WhatsApp buttons.
   const CFG = { coach: 'Alejandro', whatsapp: '34674821290', instagram: 'alehandromena', graceDays: 0 };
-  const DAY = 864e5, KEY = 'coh-preview-v1';
+  const DAY = 864e5, KEY = 'coh-preview-v2';
   const POSTERS = ['Dfu8ma-oi-x', 'Dd4A6otIHMg', 'DdorV83I_Pq', 'DeNN-wsownb', 'Df5NQCkRSzo', 'Df0EKeyofXe', 'Df-aRRmxvif'].map((id) => `/media/ig-${id}.jpg`);
   const L = (id, track, n, title, min, text) => ({ id, track, n, title, min, text, poster: POSTERS[n % POSTERS.length] });
   const LESSONS = [
@@ -69,7 +69,8 @@ window.COH = (() => {
   const seed = () => ({ members: [
     { id: 'm0', name: 'Usuario Demo', slug: 'user', token: 'demo-user-7c3e9a21', phone: '', ig: 'usuario.demo', source: 'Instagram', start: ago(40), renew: iso(Date.now() + 2 * DAY), active: true, notes: 'Viene de un reel. Prefiere entrenar por la mañana.', done: { c1: ago(3), c2: ago(2), c3: ago(1), r1: ago(2), r3: ago(1) } },
     { id: 'm1', name: 'Laura Gómez', slug: 'laura', token: 'demo-laura-4f9c1a7e', phone: '', ig: 'laura.demo', source: 'Instagram', start: ago(40), renew: iso(Date.now() + 2 * DAY), active: true, notes: 'Viene de un reel. Prefiere entrenar por la mañana.', done: { c1: ago(3), c2: ago(2), c3: ago(1), r1: ago(2), r3: ago(1) } },
-    { id: 'm2', name: 'Marcos Ruiz', slug: 'marcos', courses: ['cuerpo'], token: 'demo-marcos-81b2d6c3', phone: '', ig: '', source: 'WhatsApp', start: ago(12), renew: iso(Date.now() + 19 * DAY), active: true, notes: '', done: { c1: ago(9), r1: ago(8) } },
+    { id: 'm2', name: 'Marcos Ruiz', slug: 'marcos', courses: ['cuerpo'], token: 'demo-marcos-81b2d6c3', phone: '', ig: '', source: 'WhatsApp', start: ago(12), renew: iso(Date.now() + 19 * DAY), active: true, notes: '', done: { c1: ago(9), c2: ago(8) } },
+    { id: 'm4', name: 'Ana Beltrán', slug: 'ana', courses: ['respiracion'], token: 'demo-ana-5d18c0b7', phone: '', ig: 'ana.demo', source: 'Instagram', start: ago(20), renew: iso(Date.now() + 10 * DAY), active: true, notes: 'Solo el curso de Respiración.', done: { r1: ago(6), r2: ago(3), r3: ago(1) } },
     { id: 'm3', name: 'Sofía Navarro', slug: 'sofia', token: 'demo-sofia-2e70aa95', phone: '', ig: 'sofia.demo', source: 'Instagram', start: ago(75), renew: ago(4), active: true, notes: 'Pendiente de renovar. Le interesa el trabajo interno 1:1.', done: { c1: ago(60), c2: ago(55), c3: ago(50), c4: ago(40), c5: ago(30), r1: ago(60), r2: ago(40), r3: ago(35), r4: ago(20) } },
   ] });
   const load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.members) return s; } catch {} const s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); return s; };
@@ -79,6 +80,7 @@ window.COH = (() => {
 
   // Every Cuerpo lesson comes with a 15 minute circuit timer; the CRM can change the minutes or set 0 for none.
   const circuit = (l) => (l.track === 'cuerpo' ? (l.circuit ?? 15) : 0);
+  const breath = (l) => l.breath || ([3, 5, 10, 15].find((x) => x >= l.min) || 15); // minutes preselected on the Respiración breathing timer
   const lessons = (track) => LESSONS.filter((l) => l.track === track);
   const doneN = (m, track) => lessons(track).filter((l) => m.done[l.id]).length;
   // Cuerpo is a path: the next lesson opens once the one before is done. Respiración is always open.
@@ -108,5 +110,5 @@ window.COH = (() => {
   const gcal = (m) => `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(sessionTitle(m))}&dates=${stamp(m.session.at)}/${stamp(new Date(new Date(m.session.at).getTime() + SESSION_MIN * 60000))}`;
   const countdown = (at) => { const ms = Math.max(0, new Date(at) - Date.now()), d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 36e5), mi = Math.floor(ms % 36e5 / 6e4); return { d, h, mi, ms }; };
   const fmtDT = (d) => new Date(d).toLocaleString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-  return { circuit, courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
+  return { breath, circuit, courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
 })();

@@ -31,7 +31,7 @@
     if (!r.ok) throw new Error('No encuentro el repositorio ' + c.repo);
     if (!(await r.json()).permissions?.push) throw new Error('El token no tiene permiso de escritura (Contents: Read and write)');
   };
-  const saveLessons = () => put('lessons.json', JSON.stringify(C.LESSONS.map(({ id, track, title, min, text, poster, videos, level, pace, circuit }) => ({ id, track, title, min, text, poster, videos, level, pace, circuit })), null, 1) + '\n', 'Actualizar lecciones desde el CRM');
+  const saveLessons = () => put('lessons.json', JSON.stringify(C.LESSONS.map(({ id, track, title, min, text, poster, videos, level, pace, circuit, breath }) => ({ id, track, title, min, text, poster, videos, level, pace, circuit, breath })), null, 1) + '\n', 'Actualizar lecciones desde el CRM');
   const saveContent = () => put('content.json', JSON.stringify({ texts: C.texts() }, null, 1) + '\n', 'Actualizar textos desde el CRM');
   // First frame and length, so each lesson gets its own poster and minutes without the owner typing them.
   const probe = (file) => new Promise((res) => {

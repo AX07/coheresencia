@@ -16,19 +16,23 @@ COH.ready.then(() => {
     const list = all.filter((m) => (filter === 'todos' || kind(m) === filter) && (m.name + m.ig + m.phone).toLowerCase().includes(q.toLowerCase()));
     return `<div class="stats"><div class="card"><b>${n('activas') + n('renovar')}</b><small>miembros activos</small></div><div class="card"><b>${n('renovar')}</b><small>renuevan en 7 días</small></div><div class="card"><b>${n('vencidas')}</b><small>vencidas o sin enlace</small></div><div class="card"><b>${avg}%</b><small>progreso medio</small></div></div>
     <div class="tools"><input id="q" placeholder="Buscar por nombre, teléfono o Instagram" value="${esc(q)}">${[['todos', 'Todos'], ['activas', 'Activas'], ['renovar', 'Por renovar'], ['vencidas', 'Vencidas']].map(([k, t]) => `<button class="pill ${filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
-    <div class="list">${list.map((m) => { const [s, c] = C.status(m); return `<article class="card mrow" data-m="${m.id}"><div><b>${esc(m.name)}</b><small>${C.courses(m).map((k) => C.TRACKS[k].name).join(' + ')} · ${esc(m.source)}${m.ig ? ' · @' + esc(m.ig) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</small></div><div><span class="chip ${c}">${s}</span><small>Renueva ${C.fmt(m.renew)}</small></div><div><div class="bar"><i style="width:${C.progress(m)}%"></i></div><small>${C.progress(m)}% · Cuerpo ${C.doneN(m, 'cuerpo')}/10</small></div><div><small>Última actividad</small>${C.ago(C.lastActive(m))}</div></article>`; }).join('') || '<p class="empty">No hay miembros con ese filtro.</p>'}</div>`;
+    <div class="list">${list.map((m) => { const [s, c] = C.status(m); return `<article class="card mrow" data-m="${m.id}"><div><b>${esc(m.name)}</b><small>${C.courses(m).map((k) => C.TRACKS[k].name).join(' + ')} · ${esc(m.source)}${m.ig ? ' · @' + esc(m.ig) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</small></div><div><span class="chip ${c}">${s}</span><small>Renueva ${C.fmt(m.renew)}</small></div><div><div class="bar"><i style="width:${C.progress(m)}%"></i></div><small>${C.courses(m).map((k) => C.TRACKS[k].name + ' ' + C.doneN(m, k) + '/' + C.lessons(k).length).join(' · ')}</small></div><div><small>Última actividad</small>${C.ago(C.lastActive(m))}</div></article>`; }).join('') || '<p class="empty">No hay miembros con ese filtro.</p>'}</div>`;
   }
 
   // ---- Contenido: lessons and their videos, saved to GitHub ----
   let up = null; // { id, pct, msg } while a video is going up
+  let course = 'cuerpo';
+  const COURSE_TEXTS = { cuerpo: ['cuerpo.titulo', 'cuerpo.texto', 'circuito.texto', 'precio.cuerpo'], respiracion: ['respiracion.titulo', 'respiracion.texto', 'ritmo.texto', 'precio.respiracion'] };
   const fail = (e) => { up = null; render(); toast(e.message || 'No se pudo guardar'); };
   function content() {
     const g = C.gh.cfg(), on = C.gh.ok();
     const banner = `<div class="card gh ${on ? 'ok' : ''}"><div><b>${on ? 'Subida de vídeos activa' : 'Desbloquea la subida de vídeos'}</b><small class="mute" style="display:block">${on ? 'Cada vídeo que subes se guarda en tu web, que se actualiza sola en ~1 minuto. (' + esc(g.repo) + ')' : 'Los vídeos se guardan dentro de tu web, sin Vimeo ni YouTube. Escribe la contraseña del CRM una sola vez.'}</small></div><button class="btn sm ${on ? 'ghost' : ''}" data-g="settings">${on ? 'Ajustes' : 'Desbloquear'}</button></div>`;
-    return banner + Object.entries(C.TRACKS).map(([k, t]) => { const ls = C.lessons(k); return `<div class="tr"><h2>${t.name}</h2><span class="mute">${t.sub} · ${t.seq ? 'se desbloquea en orden' : 'acceso libre'}</span><button class="btn sm ghost" style="margin-left:auto" data-g="add" data-t="${k}">+ Lección</button></div><div class="list">${ls.map((l, i) => {
+    return banner + `<div class="tools" style="margin-top:14px">${Object.entries(C.TRACKS).map(([k, t]) => `<button class="pill ${course === k ? 'on' : ''}" data-course="${k}" style="font-size:15px;padding:10px 20px">${t.name} · ${C.lessons(k).length}</button>`).join('')}</div>
+    <div class="card" style="padding:16px 18px;margin-bottom:6px"><p class="eyebrow">Textos y precio del curso ${C.TRACKS[course].name}</p><div class="list" style="margin-top:10px">${COURSE_TEXTS[course].map((k) => `<label>${C.TEXTS[k][0]}<textarea data-tx="${k}" maxlength="400" rows="2">${esc(C.T(k))}</textarea></label>`).join('')}</div><div class="acts" style="margin-top:10px"><button class="btn sm" data-g="savetx">Guardar textos</button></div></div>`
+    + [[course, C.TRACKS[course]]].map(([k, t]) => { const ls = C.lessons(k); return `<div class="tr"><h2>${t.name}</h2><span class="mute">${t.sub} · ${t.seq ? 'se desbloquea en orden' : 'acceso libre'}</span><button class="btn sm ghost" style="margin-left:auto" data-g="add" data-t="${k}">+ Lección</button></div><div class="list">${ls.map((l, i) => {
       const busy = up && up.id === l.id;
       const n = l.videos.length, right = busy ? `<div class="upbar"><div class="bar"><i style="width:${Math.round(up.pct * 100)}%"></i></div><small class="mute">${esc(up.msg)}</small></div>` : `<span class="chip ${n ? 'ok' : 'warn'}">${n ? n + (n > 1 ? ' vídeos' : ' vídeo') : 'Sin vídeo'}</span><label class="btn sm ${n ? 'ghost' : ''}" ${up ? 'style="opacity:.4;pointer-events:none"' : ''}>${n ? '+ Vídeo' : 'Subir vídeo'}<input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-up="${l.id}"></label>`;
-      return `<article class="card les"><img class="thumb" src="${esc(l.poster)}" alt=""><div><b style="font-weight:500">${i + 1}. ${esc(l.title)}</b><small class="mute" style="display:block">${l.min} min${C.circuit(l) ? ' · circuito de ' + C.circuit(l) + ' min' : ''}</small></div>${right}<span class="acts" style="flex-wrap:nowrap"><button class="btn sm ghost ic" data-g="up" data-id="${l.id}" ${i ? '' : 'disabled'} aria-label="Subir">↑</button><button class="btn sm ghost ic" data-g="down" data-id="${l.id}" ${i < ls.length - 1 ? '' : 'disabled'} aria-label="Bajar">↓</button><button class="btn sm ghost" data-g="edit" data-id="${l.id}">Editar</button></span></article>`;
+      return `<article class="card les"><img class="thumb" src="${esc(l.poster)}" alt=""><div><b style="font-weight:500">${i + 1}. ${esc(l.title)}</b><small class="mute" style="display:block">${l.min} min${l.track === 'cuerpo' ? (C.circuit(l) ? ' · circuito de ' + C.circuit(l) + ' min' : '') : ' · ritmo ' + (l.pace && C.PACES[l.pace] ? C.PACES[l.pace].name : 'a elegir') + ' · temporizador ' + C.breath(l) + ' min'}</small></div>${right}<span class="acts" style="flex-wrap:nowrap"><button class="btn sm ghost ic" data-g="up" data-id="${l.id}" ${i ? '' : 'disabled'} aria-label="Subir">↑</button><button class="btn sm ghost ic" data-g="down" data-id="${l.id}" ${i < ls.length - 1 ? '' : 'disabled'} aria-label="Bajar">↓</button><button class="btn sm ghost" data-g="edit" data-id="${l.id}">Editar</button></span></article>`;
     }).join('')}</div>`; }).join('') + '<p class="mute" style="margin-top:22px">El orden de Cuerpo es el orden en que se desbloquea. Una lección puede tener varios vídeos. Si un vídeo pesa mucho o no es WebM, el CRM lo convierte a WebM al subirlo (tarda lo que dura el vídeo y hay que dejar la pestaña abierta). Máximo 90 MB por vídeo.</p>';
   }
   const persist = async (msg) => { if (!C.gh.ok()) { settings(); return false; } try { toast('Guardando…'); await C.gh.saveLessons(); toast(msg || 'Guardado. La web se actualiza en ~1 minuto'); return true; } catch (e) { toast(e.message); return false; } };
@@ -53,6 +57,7 @@ COH.ready.then(() => {
     <div class="two"><label>Nivel<select name="level"><option value="">Sin nivel</option>${C.LEVELS.map((v) => `<option ${v === l?.level ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Ritmo de respiración (opcional)<select name="pace"><option value="">Ninguno</option>${Object.entries(C.PACES).map(([k, v]) => `<option value="${k}" ${k === l?.pace ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label></div>
     <label>Duración (minutos, se rellena sola al subir el vídeo)<input name="min" type="number" min="1" max="180" value="${l?.min || 10}"></label>
     ${(track || l?.track) === 'cuerpo' ? `<label>Circuito: minutos que tiene el miembro para hacer rondas (15 por defecto, 0 = sin circuito)<input name="circuit" type="number" min="0" max="120" value="${l ? C.circuit(l) : 15}"></label>` : ''}
+    ${(track || l?.track) === 'respiracion' ? `<label>Temporizador de respiración: minutos que aparecen marcados al empezar<input name="breath" type="number" min="1" max="60" value="${l ? C.breath(l) : 5}"></label>` : ''}
     ${l ? `<div><p class="eyebrow">Vídeos de la lección</p>${l.videos.map((v, i) => `<div class="acts" style="justify-content:space-between;align-items:center;margin-top:8px"><span>Vídeo ${i + 1}${v.min ? ' · ' + v.min + ' min' : ''}</span><span class="acts"><label class="btn sm ghost">Reemplazar<input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-up="${l.id}" data-idx="${i}"></label><button type="button" class="btn sm ghost" data-g="rmvid" data-i="${i}" style="color:var(--bad)">Quitar</button></span></div>`).join('') || '<p class="mute">Aún no hay vídeos.</p>'}<label class="btn sm" style="margin-top:10px">+ Añadir vídeo<input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-up="${l.id}"></label></div>` : ''}
     <div class="acts"><button class="btn" type="submit">Guardar</button><button class="btn ghost" type="button" data-x>Cancelar</button>${l ? '<button class="btn ghost" type="button" data-g="delete" style="margin-left:auto;color:var(--bad)">Eliminar</button>' : ''}</div></form>`;
     dlg.dataset.id = l?.id || ''; dlg.dataset.t = track || l?.track; dlg.showModal();
@@ -117,8 +122,8 @@ COH.ready.then(() => {
     else if (a === 'del') { if (confirm(`¿Eliminar a ${m.name}? No se puede deshacer.`)) { db.members = db.members.filter((x) => x !== m); save(); dlg.close(); render(); } }
   });
   document.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-tab],[data-m],[data-f],#new,#reset'); if (!t) return;
-    if (t.dataset.tab) { tab = t.dataset.tab; render(); } else if (t.dataset.m) openMember(t.dataset.m);
+    const t = e.target.closest('[data-tab],[data-m],[data-f],[data-course],#new,#reset'); if (!t) return;
+    if (t.dataset.tab) { tab = t.dataset.tab; render(); } else if (t.dataset.course) { course = t.dataset.course; render(); } else if (t.dataset.m) openMember(t.dataset.m);
     else if (t.dataset.f && !t.closest('dialog')) { filter = t.dataset.f; render(); }
     else if (t.id === 'new') newMember();
     else if (t.id === 'reset' && confirm('Volver a los miembros de ejemplo? Se borran los cambios de esta vista previa.')) { db = C.reset(); render(); toast('Ejemplo restablecido'); }
@@ -136,7 +141,7 @@ COH.ready.then(() => {
     } else {
       let l = C.LESSONS.find((x) => x.id === dlg.dataset.id);
       if (!l) { l = { id: 'x' + Date.now().toString(36), track: dlg.dataset.t }; C.LESSONS.push(l); }
-      Object.assign(l, { title: d.title.trim(), text: d.text.trim(), min: +d.min || 10, circuit: d.circuit === undefined ? undefined : Math.max(0, +d.circuit || 0), level: d.level || undefined, pace: d.pace || undefined }); C.renumber(); dlg.close(); render(); await persist();
+      Object.assign(l, { title: d.title.trim(), text: d.text.trim(), min: +d.min || 10, circuit: d.circuit === undefined ? undefined : Math.max(0, +d.circuit || 0), breath: d.breath ? +d.breath : undefined, level: d.level || undefined, pace: d.pace || undefined }); C.renumber(); dlg.close(); render(); await persist();
     }
   });
   dlg.addEventListener('click', async (e) => {
@@ -159,7 +164,7 @@ COH.ready.then(() => {
     const g = t.dataset.g, l = C.LESSONS.find((x) => x.id === t.dataset.id);
     if (g === 'settings') return settings(C.gh.ok());
     if (g === 'resettx') { C.setTexts({}); render(); return persistTexts(); }
-    if (g === 'savetx') { const o = {}; document.querySelectorAll('[data-tx]').forEach((x) => { const v = x.value.trim(); if (v && v !== C.TEXTS[x.dataset.tx][1]) o[x.dataset.tx] = v; }); C.setTexts(o); return persistTexts(); }
+    if (g === 'savetx') { const o = { ...C.texts() }; document.querySelectorAll('[data-tx]').forEach((x) => { const v = x.value.trim(); if (v && v !== C.TEXTS[x.dataset.tx][1]) o[x.dataset.tx] = v; else delete o[x.dataset.tx]; }); C.setTexts(o); return persistTexts(); }
     if (g === 'add') return lessonForm(null, t.dataset.t);
     if (g === 'edit') return lessonForm(l);
     if (g === 'up' || g === 'down') {
