@@ -69,6 +69,19 @@ COH.ready.then(() => {
   const render = () => { view.innerHTML = tab === 'miembros' ? members() : tab === 'contenido' ? content() : textos(); document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab)); };
 
   const localDT = (iso) => { const d = new Date(iso), p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+  // ---- Sesiones: what the member has done in each course (circuit rounds and finished lessons), editable ----
+  let mc = null; // course open inside the member dialog
+  const rowsOf = (m, k) => { const out = []; C.lessons(k).forEach((l) => { const rr = (m.rounds || {})[l.id] || []; rr.forEach((x, i) => out.push({ k: 'r', l, at: x.at, n: x.n, i })); if (m.done[l.id] && !rr.length) out.push({ k: 'd', l, at: m.done[l.id] }); }); return out.sort((a, b) => b.at.localeCompare(a.at)); };
+  const sessions = (m) => {
+    const ks = C.courses(m); if (!ks.includes(mc)) mc = ks[0];
+    const ls = C.lessons(mc), rows = rowsOf(m, mc), tot = rows.filter((x) => x.k === 'r').reduce((t, x) => t + x.n, 0);
+    const field = 'style="min-height:0;padding:7px 9px"';
+    return `<div><p class="eyebrow">Sesiones del miembro</p><div class="acts" style="margin:8px 0">${ks.map((k) => `<button class="pill ${k === mc ? 'on' : ''}" data-a="mc" data-k="${k}">${C.TRACKS[k].name}</button>`).join('')}</div>
+    <p class="mute">${C.doneN(m, mc)}/${ls.length} lecciones${mc === 'cuerpo' ? ` · ${tot} rondas en total` : ''} · racha de ${C.streak(m)} días · última actividad: ${C.ago(C.lastActive(m)).toLowerCase()}</p>
+    <div style="display:grid;gap:8px;margin-top:10px">${rows.map((x) => `<div class="card" style="padding:10px 12px;display:grid;gap:8px"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-weight:500">${x.l.n + 1}. ${esc(x.l.title)}</b><button class="btn sm ghost" data-a="sdel" data-kind="${x.k}" data-l="${x.l.id}" data-i="${x.i ?? ''}" style="color:var(--bad)">Quitar</button></div>
+      <div class="two"><label>${x.k === 'r' ? 'Circuito hecho el' : 'Hecha el'}<input type="datetime-local" ${field} data-sx="${x.k === 'r' ? 'rd' : 'dd'}" data-l="${x.l.id}" data-i="${x.i ?? ''}" value="${localDT(x.at)}"></label>${x.k === 'r' ? `<label>Rondas<input type="number" min="0" max="99" ${field} data-sx="rn" data-l="${x.l.id}" data-i="${x.i}" value="${x.n}"></label>` : '<span class="mute" style="align-self:end">Marcada como hecha</span>'}</div></div>`).join('') || '<p class="mute">Todavía no ha hecho ninguna sesión de este curso.</p>'}</div>
+    <div class="card" style="padding:12px;margin-top:10px;display:grid;gap:8px"><p class="eyebrow">Añadir sesión a mano</p><label>Lección<select data-sn="l" ${field}>${ls.map((l) => `<option value="${l.id}">${l.n + 1}. ${esc(l.title)}</option>`).join('')}</select></label><div class="two"><label>Fecha<input type="datetime-local" data-sn="at" ${field} value="${localDT(new Date())}"></label>${mc === 'cuerpo' ? `<label>Rondas<input type="number" min="0" max="99" data-sn="n" ${field} value="1"></label>` : ''}</div><button class="btn sm" data-a="sadd">Añadir</button></div></div>`;
+  };
   function openMember(id) {
     const m = db.members.find((x) => x.id === id), [s, c] = C.status(m);
     dlg.innerHTML = `<div class="dlg"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><span class="chip ${c}">${s}</span><h2 style="margin-top:8px">${esc(m.name)}</h2><p class="mute">Desde ${C.fmt(m.start)} · renueva ${C.fmt(m.renew)}</p></div><button class="btn sm ghost" data-x>Cerrar</button></div>
@@ -78,11 +91,11 @@ COH.ready.then(() => {
     <div><p class="eyebrow">Cursos que tiene</p><div class="acts" style="margin-top:6px;gap:18px">${Object.entries(C.TRACKS).map(([k, t]) => `<label style="display:flex;flex-direction:row;align-items:center;gap:8px;color:var(--cream)"><input type="checkbox" data-c="${k}" ${C.has(m, k) ? 'checked' : ''} style="width:auto;min-height:0"> ${t.name}</label>`).join('')}</div></div>
     <div class="two"><label>Renueva el<input type="date" data-f="renew" value="${m.renew.slice(0, 10)}"></label><label>Origen<select data-f="source">${['WhatsApp', 'Instagram', 'En persona', 'Otro'].map((o) => `<option ${o === m.source ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>
     <div class="acts"><button class="btn sm" data-a="renew">Renovar +1 mes</button><button class="btn sm ghost" data-a="renewmsg">Copiar aviso de renovación</button><button class="btn sm ghost" data-a="newlink">Enlace nuevo</button><button class="btn sm ghost" data-a="toggle">${m.active ? 'Apagar enlace' : 'Encender enlace'}</button></div>
-    <div><p class="eyebrow">Progreso</p>${Object.entries(C.TRACKS).map(([k, t]) => `<div style="margin-top:10px;display:flex;justify-content:space-between"><span>${t.name}</span><span class="mute">${C.doneN(m, k)}/${C.lessons(k).length}</span></div><div class="bar" style="margin-top:4px"><i style="width:${(C.doneN(m, k) / C.lessons(k).length) * 100}%"></i></div>`).join('')}<p class="mute" style="margin-top:10px">Racha: ${C.streak(m)} días · última actividad: ${C.ago(C.lastActive(m)).toLowerCase()}</p></div>
+    ${sessions(m)}
     <div><p class="eyebrow">Sesión 1:1</p><p style="margin-top:6px">${m.session ? C.fmtDT(m.session.at) + ' · ' + (m.session.course && C.TRACKS[m.session.course] ? C.TRACKS[m.session.course].name + ' · ' : '') + esc(m.session.mode) : '<span class="mute">Sin sesión confirmada. Cuando el miembro te escriba y acordéis hora, ponla aquí y le aparece en su panel con cuenta atrás.</span>'}</p>
     <div class="two" style="margin-top:8px"><label>Día y hora<input type="datetime-local" data-s="at" value="${m.session ? localDT(m.session.at) : ''}"></label><label>Curso<select data-s="course">${C.courses(m).map((k) => `<option value="${k}" ${m.session && m.session.course === k ? 'selected' : ''}>${C.TRACKS[k].name}</option>`).join('')}</select></label><label>Modo<select data-s="mode">${['Online', 'Presencial'].map((o) => `<option ${m.session && m.session.mode === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>
     <div class="acts" style="margin-top:8px"><button class="btn sm" data-a="session">Confirmar sesión</button><button class="btn sm ghost" data-a="sessionmsg">Copiar mensaje de confirmación</button>${m.session ? '<button class="btn sm ghost" data-a="nosession">Quitar</button>' : ''}</div></div>
-    ${(() => { const rows = C.LESSONS.filter((l) => (m.rounds || {})[l.id]).map((l) => `<div style="display:flex;justify-content:space-between;gap:10px;margin-top:6px"><span>${esc(l.title)}</span><span class="mute">${m.rounds[l.id].map((x) => x.n).join(' · ')} rondas</span></div>`); return rows.length ? `<div><p class="eyebrow">Rondas de los circuitos</p>${rows.join('')}</div>` : ''; })()}
+
     <label>Notas privadas (el miembro no las ve)<textarea data-f="notes">${esc(m.notes)}</textarea></label>
     <div class="acts"><button class="btn sm ghost" data-a="del" style="color:var(--bad)">Eliminar miembro</button></div></div>`;
     dlg.dataset.id = id; dlg.showModal();
@@ -107,11 +120,33 @@ COH.ready.then(() => {
     if (!m.courses.length) return toast('Elige al menos un curso');
     db.members.unshift(m); save(); render(); openMember(m.id); toast('Miembro creado: copia su enlace y envíalo');
   });
+  dlg.addEventListener('change', (e) => {
+    const x = e.target.dataset.sx; if (!x) return;
+    const m = db.members.find((y) => y.id === dlg.dataset.id), l = e.target.dataset.l, i = +e.target.dataset.i;
+    if (x === 'dd') m.done[l] = new Date(e.target.value || Date.now()).toISOString();
+    else if (x === 'rd') m.rounds[l][i].at = new Date(e.target.value || Date.now()).toISOString();
+    else if (x === 'rn') m.rounds[l][i].n = Math.max(0, +e.target.value || 0);
+    save(); render(); toast('Cambio guardado');
+  });
   dlg.addEventListener('change', (e) => { if (e.target.dataset.c) { const m = db.members.find((x) => x.id === dlg.dataset.id), on = [...dlg.querySelectorAll('[data-c]')].filter((i) => i.checked).map((i) => i.dataset.c); if (!on.length) { e.target.checked = true; return toast('Tiene que tener al menos un curso'); } m.courses = on; save(); render(); return; }
     const f = e.target.dataset.f, m = db.members.find((x) => x.id === dlg.dataset.id); if (!f || !m) return; m[f] = f === 'renew' ? new Date(e.target.value).toISOString() : f === 'phone' ? e.target.value.replace(/\D/g, '') : e.target.value; save(); render(); });
   dlg.addEventListener('click', (e) => {
     const t = e.target.closest('[data-x],[data-a]'); if (!t) return; if (t.dataset.x !== undefined) return dlg.close();
     const m = db.members.find((x) => x.id === dlg.dataset.id), a = t.dataset.a;
+    if (a === 'mc') { mc = t.dataset.k; return openMember(m.id); }
+    if (a === 'sdel') {
+      const l = C.LESSONS.find((x) => x.id === t.dataset.l);
+      if (t.dataset.kind === 'r') { m.rounds[l.id].splice(+t.dataset.i, 1); if (!m.rounds[l.id].length) delete m.rounds[l.id]; }
+      else { const nx = l.track === 'cuerpo' && C.lessons('cuerpo')[l.n + 1]; if (nx && m.done[nx.id]) return toast('Primero quita la lección siguiente'); delete m.done[l.id]; }
+      save(); render(); return openMember(m.id);
+    }
+    if (a === 'sadd') {
+      const l = C.LESSONS.find((x) => x.id === dlg.querySelector('[data-sn=l]').value), at = dlg.querySelector('[data-sn=at]').value; if (!at) return toast('Elige la fecha');
+      const when = new Date(at).toISOString(), nEl = dlg.querySelector('[data-sn=n]');
+      if (nEl) (m.rounds ||= {})[l.id] = [...(m.rounds[l.id] || []), { at: when, n: Math.max(0, +nEl.value || 0) }];
+      if (!m.done[l.id]) m.done[l.id] = when;
+      save(); render(); toast('Sesión añadida'); return openMember(m.id);
+    }
     if (a === 'session') { const at = dlg.querySelector('[data-s=at]').value; if (!at) return toast('Elige el día y la hora'); m.session = { at: new Date(at).toISOString(), mode: dlg.querySelector('[data-s=mode]').value, course: dlg.querySelector('[data-s=course]').value }; save(); toast('Sesión confirmada: el miembro la ve en su panel'); return openMember(m.id); }
     if (a === 'nosession') { delete m.session; save(); return openMember(m.id); }
     if (a === 'sessionmsg') { if (!m.session) return toast('Primero confirma la sesión'); return copy(`Hola ${first(m)}, confirmado: tu sesión 1:1${m.session.course && C.TRACKS[m.session.course] ? ' de ' + C.TRACKS[m.session.course].name : ''} es el ${C.fmtDT(m.session.at)} (${m.session.mode.toLowerCase()}). La verás en tu panel con la cuenta atrás: ${C.link(m)}`); }
