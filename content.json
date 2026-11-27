@@ -1,0 +1,84 @@
+{
+ "texts": {},
+ "opts": {
+  "mins": [
+   1,
+   3,
+   5,
+   10,
+   15
+  ],
+  "tick": true,
+  "paces": {
+   "calma": {
+    "name": "Calma",
+    "hint": "Exhalar más largo que inhalar baja las revoluciones.",
+    "seq": [
+     [
+      "Inhala",
+      4
+     ],
+     [
+      "Exhala",
+      6
+     ]
+    ]
+   },
+   "coherente": {
+    "name": "Coherente",
+    "hint": "Un ritmo parejo para encontrar calma y claridad.",
+    "seq": [
+     [
+      "Inhala",
+      5
+     ],
+     [
+      "Exhala",
+      5
+     ]
+    ]
+   },
+   "caja": {
+    "name": "Caja",
+    "hint": "Cuatro tiempos iguales. Foco y estabilidad.",
+    "seq": [
+     [
+      "Inhala",
+      4
+     ],
+     [
+      "Mantén",
+      4
+     ],
+     [
+      "Exhala",
+      4
+     ],
+     [
+      "Mantén",
+      4
+     ]
+    ]
+   },
+   "dormir": {
+    "name": "Dormir",
+    "hint": "La pausa larga y la exhalación lenta preparan el sueño.",
+    "seq": [
+     [
+      "Inhala",
+      4
+     ],
+     [
+      "Mantén",
+      7
+     ],
+     [
+      "Exhala",
+      8
+     ]
+    ]
+   }
+  }
+ },
+ "plans": {}
+}
