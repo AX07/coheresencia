@@ -7,6 +7,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-grad
 img{max-width:100%;display:block}
 a{color:inherit}
 button,input,select,textarea{font:inherit;color:inherit}
+/* the open dropdown list and date pickers are drawn by the browser: tell it the page is dark so their text is readable */
+:root{color-scheme:dark}option{background:var(--ink2);color:var(--cream)}
 h1,h2,h3{font-family:var(--serif);font-weight:300;line-height:1.15}
 .eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
 .mute{color:var(--mute)}
