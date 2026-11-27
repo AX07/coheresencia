@@ -48,6 +48,8 @@ window.COH = (() => {
   const ready = Promise.all([getJ('/lessons.json'), getJ('/content.json')]).then(([j, c]) => {
     if (Array.isArray(j) && j.length) { LESSONS.length = 0; j.forEach((x) => LESSONS.push(x)); }
     if (c && c.texts) OVERRIDE = c.texts;
+    if (c && c.opts) { Object.assign(OPTS, c.opts); if (c.opts.paces) setPaces(c.opts.paces); }
+    if (c && c.plans) Object.assign(PLANS, c.plans);
     renumber();
   });
   // Breathing rhythms: [phase, seconds]. A lesson can point at one with `pace`; the member page then offers it with the video.
@@ -57,6 +59,11 @@ window.COH = (() => {
     caja: { name: 'Caja', hint: 'Cuatro tiempos iguales. Foco y estabilidad.', seq: [['Inhala', 4], ['Mantén', 4], ['Exhala', 4], ['Mantén', 4]] },
     dormir: { name: 'Dormir', hint: 'La pausa larga y la exhalación lenta preparan el sueño.', seq: [['Inhala', 4], ['Mantén', 7], ['Exhala', 8]] },
   };
+  const setPaces = (o) => { if (!Object.keys(o).length) return; Object.keys(PACES).forEach((k) => delete PACES[k]); Object.assign(PACES, o); }; // same object, so pacer.js sees it
+  // Breathing course settings (CRM > Contenido > Respiración): minutes offered on the timer and whether the second-by-second tick starts on.
+  const OPTS = { mins: [1, 3, 5, 10, 15], tick: false };
+  // What Alejandro changed for one member only: { memberId: { order: { track: [ids] }, edit: { lessonId: { title, text, circuit, breath, pace, tick, hidden } } } }
+  const PLANS = {};
   const LEVELS = ['Inicial', 'Intermedio', 'Avanzado'];
   const TRACKS = {
     cuerpo: { name: 'Cuerpo', sub: 'Entrenamiento consciente', seq: true },
@@ -80,16 +87,26 @@ window.COH = (() => {
 
   // Every Cuerpo lesson comes with a 15 minute circuit timer; the CRM can change the minutes or set 0 for none.
   const circuit = (l) => (l.track === 'cuerpo' ? (l.circuit ?? 15) : 0);
-  const breath = (l) => l.breath || ([3, 5, 10, 15].find((x) => x >= l.min) || 15); // minutes preselected on the Respiración breathing timer
-  const lessons = (track) => LESSONS.filter((l) => l.track === track);
-  const doneN = (m, track) => lessons(track).filter((l) => m.done[l.id]).length;
-  // Cuerpo is a path: the next lesson opens once the one before is done. Respiración is always open.
-  const unlocked = (m, l) => !TRACKS[l.track].seq || l.n === 0 || !!m.done[lessons(l.track)[l.n - 1].id];
-  const next = (m) => lessons('cuerpo').find((l) => !m.done[l.id]) || null;
+  const breath = (l) => l.breath || OPTS.mins.find((x) => x >= l.min) || OPTS.mins[OPTS.mins.length - 1]; // minutes preselected on the Respiración breathing timer
+  const tick = (l) => l?.tick ?? OPTS.tick;
+  // Without a member: the general catalogue. With one: their own lessons added, their changes applied, their order; hidden ones only if `all`.
+  // A lesson with `only` belongs to that member alone.
+  const lessons = (track, m, all) => {
+    const ls = LESSONS.filter((l) => l.track === track && (!l.only || (m && l.only === m.id)));
+    if (!m) return ls;
+    const p = PLANS[m.id] || {}, order = p.order?.[track] || [], at = (l) => { const i = order.indexOf(l.id); return i < 0 ? 1e6 : i; };
+    return ls.map((l) => ({ ...l, ...p.edit?.[l.id] })).filter((l) => all || !l.hidden).sort((a, b) => at(a) - at(b)).map((l, n) => ({ ...l, n }));
+  };
+  const lesson = (id, m) => { const l = LESSONS.find((x) => x.id === id); return l && (m ? lessons(l.track, m, true).find((x) => x.id === id) : l); };
+  const all = (m) => courses(m).flatMap((k) => lessons(k, m));
+  const doneN = (m, track) => lessons(track, m).filter((l) => m.done[l.id]).length;
+  // Cuerpo is a path: the next lesson opens once the one before is done (a done one stays open if the order changes). Respiración is always open.
+  const unlocked = (m, l) => !TRACKS[l.track].seq || l.n === 0 || !!m.done[l.id] || !!m.done[lessons(l.track, m)[l.n - 1]?.id];
+  const next = (m) => lessons('cuerpo', m).find((l) => !m.done[l.id]) || null;
   // Cuerpo and Respiración are two separate courses. A member has one or both (m.courses; older members have both).
   const courses = (m) => (m.courses && m.courses.length ? m.courses : Object.keys(TRACKS));
   const has = (m, t) => courses(m).includes(t);
-  const progress = (m) => { const ls = LESSONS.filter((l) => has(m, l.track)); return ls.length ? Math.round((ls.filter((l) => m.done[l.id]).length / ls.length) * 100) : 0; };
+  const progress = (m) => { const ls = all(m); return ls.length ? Math.round((ls.filter((l) => m.done[l.id]).length / ls.length) * 100) : 0; };
   const dayKey = (d) => new Date(d).toLocaleDateString('sv');
   const activeDays = (m) => new Set(Object.values(m.done).map(dayKey));
   const streak = (m) => { const a = activeDays(m); let n = 0, d = new Date(); if (!a.has(dayKey(d))) d = new Date(Date.now() - DAY); while (a.has(dayKey(d))) { n++; d = new Date(+d - DAY); } return n; };
@@ -110,5 +127,5 @@ window.COH = (() => {
   const gcal = (m) => `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(sessionTitle(m))}&dates=${stamp(m.session.at)}/${stamp(new Date(new Date(m.session.at).getTime() + SESSION_MIN * 60000))}`;
   const countdown = (at) => { const ms = Math.max(0, new Date(at) - Date.now()), d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 36e5), mi = Math.floor(ms % 36e5 / 6e4); return { d, h, mi, ms }; };
   const fmtDT = (d) => new Date(d).toLocaleString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-  return { breath, circuit, courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
+  return { OPTS, PLANS, setPaces, tick, lesson, all, breath, circuit, courses, has, T, TEXTS, texts: () => OVERRIDE, setTexts: (o) => { OVERRIDE = o; }, upcoming, icsBlob, gcal, countdown, fmtDT, sessionTitle, SESSION_MIN, PACES, LEVELS, ready, renumber, CFG, LESSONS, TRACKS, load, save, reset, find, lessons, doneN, unlocked, next, progress, streak, activeDays, lastActive, daysLeft, status, fmt, ago: ago_, link, wa, addMonth, token, slugify, dayKey, DAY };
 })();
